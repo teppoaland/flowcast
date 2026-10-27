@@ -2,8 +2,13 @@
 
 ## Tarkoitus
 
-Selainpohjainen digitaalinen mainosnäyttöpalvelu kahvihuoneen 100" näytölle.
-Korvaa ohjelma-x:n, joka ei tue URL-sisältöä. Pyörii sisäverkossa ilman sertifikaattia.
+Itsenäinen 24/7 info-TV ja mediasoitin sisäverkkoon. Pyörittää kuvia, videoita
+ja URL-sisältöä missä tahansa selaimellisessa laitteessa (TV, tabletti,
+puhelin) ja tarjoaa selainpohjaisen hallintapaneelin sisällön ohjaamiseen.
+
+Alun perin korvasi ohjelma-x:n, joka ei tukenut URL-sisältöä. Pyörii
+sisäverkossa ilman sertifikaattia. Skaalautuu suuriin arkistoihin —
+kymmeniätuhansia kuvia ja kymmeniä tunteja videota.
 
 ---
 

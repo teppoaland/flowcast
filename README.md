@@ -1,8 +1,15 @@
 # FlowCast
 
-Selainpohjainen digitaalinen mainosnäyttöpalvelu sisäverkkoon. Näyttää kuvia,
-videoita ja URL-sisältöä täysruutunäytöllä ja tarjoaa selainpohjaisen
-hallintapaneelin.
+Itse ylläpidettävä 24/7 info-TV ja mediasoitin sisäverkkoon. FlowCast pyörittää
+kuva-, video- ja URL-sisältöä missä tahansa selaimellisessa laitteessa —
+televisiossa, tabletissa tai puhelimessa — ja tarjoaa selainpohjaisen
+hallintapaneelin sisällön ohjaamiseen.
+
+Käyttötapaus: näyttö, joka pyörii jatkuvasti omalla materiaalilla. FlowCast
+kokoaa useat lähteet (omat kansiot, liitetyt levyt, guest-lataukset, suosikit)
+yhdeksi feediksi, josta voi valita kuvat, videot tai molemmat — tai vain
+parhaat pätkät. Skaalautuu kymmeniintuhansiin kuviin ja kymmeniin tunteihin
+videota.
 
 > Repositorio sisältää vain lähdekoodin — ei kuvia, videoita eikä muuta
 > sisältöä. Lisenssi: ks. [LICENSE](LICENSE).

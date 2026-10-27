@@ -17,6 +17,7 @@
 - [THIRD_PARTY_NOTICES.md] Kolmannen osapuolen komponenttiluettelo
 - [VERSION] 2.2.0
 - [README.md] Uudelleenkirjoitettu geneerisillä asennus- ja asetusohjeilla
+- [README.md, projekti.md] Kuvaus päivitetty: 24/7 info-TV ja mediasoitin, ei enää pelkkä mainosnäyttö
 
 ## [Unreleased] - 2026-06-03
 
