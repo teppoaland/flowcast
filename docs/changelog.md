@@ -1,5 +1,17 @@
 # CHANGELOG - FlowCast
 
+## [10.01] - 2026-10-27
+
+### Tuotteen versionumero käyttöön (v10.01)
+- [VERSION] `10.01` — tuoteversio siirtyy kaksiosaiseen 10.x-sarjaan (GameHub-tyyli); `VERSION` on jatkossa version ainoa totuus
+- [mediaplayer.py] Uusi `_read_version()` + `APP_VERSION`: versio luetaan `VERSION`-tiedostosta käynnistyksen yhteydessä, puuttuva tiedosto ei kaada palvelinta (`0.0.0`)
+- [mediaplayer.py] `/api/ping` ja `/api/android/ping` palauttavat `version`-kentän; käynnistyksen konsolibanneri tulostaa version
+- [templates/admin.html] Versiotunnus logon (SVG) vieressä ja sivun otsikossa
+- [templates/admin_guest.html, loading.html, settings.html] `.version-badge` otsikon vieressä ja versio `<title>`-otsikossa
+- [android/VERSION, android/main.py] `10.01`: `APP_VERSION` ja yläpalkin versioteksti `FlowCast`-otsikon vieressä
+- [android/docs/CHANGELOG.md] v10.01-merkintä
+- [README.md] Otsikkoon versio (`FlowCast 10.01`) ja `VERSION`-tiedosto hakemistorakenteeseen
+
 ## [Unreleased] - 2026-10-27
 
 ### Geneerinen julkaisu: riippumaton asennushakemistosta ja verkko-osoitteesta (v2.2.0)

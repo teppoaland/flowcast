@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FlowCast — Guest</title>
+    <title>FlowCast {{ app_version }} — Guest</title>
     <link rel="icon" href="/favicon.svg" type="image/svg+xml">
     <style>
         :root {
@@ -36,6 +36,13 @@
         h1 {
             font-size: 1.4rem;
             margin-bottom: 4px;
+        }
+
+        .version-badge {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--muted);
+            margin-left: 4px;
         }
 
         .display-url {
@@ -408,7 +415,7 @@
         </div>
     </div>
 
-    <h1>FlowCast</h1>
+    <h1>FlowCast <span class="version-badge">{{ app_version }}</span></h1>
     <p class="display-url">Stream näyttö URL: <a href="{{ display_url }}" target="_blank">{{ display_url }}</a> (mix) | <a href="{{ images_url }}" target="_blank">{{ images_url }}</a> | <a href="{{ videos_url }}" target="_blank">{{ videos_url }}</a></p>
 
     <div class="panel">

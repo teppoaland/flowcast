@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FlowCast — Admin Settings</title>
+    <title>FlowCast {{ app_version }} — Admin Settings</title>
     <link rel="icon" href="/favicon.svg" type="image/svg+xml">
     <style>
         :root {
@@ -32,6 +32,7 @@
         }
 
         h1 { font-size: 1.3rem; margin-bottom: 4px; }
+        .version-badge { font-size: 0.75rem; font-weight: 600; color: var(--muted); margin-left: 4px; }
         .subtitle { font-size: 0.85rem; color: var(--muted); margin-bottom: 20px; }
 
         .panel {
@@ -124,7 +125,7 @@
 
 <body>
     <a href="/adminpanel" class="back-link">&larr; Takaisin admin-paneeliin</a>
-    <h1>Admin-näkymän asetukset</h1>
+    <h1>Admin-näkymän asetukset <span class="version-badge">{{ app_version }}</span></h1>
     <p class="subtitle">Määritä mitkä kentät ja osiot näytetään admin-paneelissa. Piilotettujen osioiden asetukset säilyvät voimassa.</p>
 
     <div class="panel">

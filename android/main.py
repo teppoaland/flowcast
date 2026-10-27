@@ -12,7 +12,7 @@ import flet as ft
 import httpx
 
 APP_NAME = "FlowCast Pro"
-APP_VERSION = "2.1.3"
+APP_VERSION = "10.01"
 DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = 5010
 DEFAULT_TARGET = "android_upload"
@@ -155,7 +155,10 @@ class FlowCastApp:
                 ft.Column([
                     ft.Container(
                         content=ft.Row([
-                            ft.Text("FlowCast", size=20, weight="bold", color=self.C["text"]),
+                            ft.Row([
+                                ft.Text("FlowCast", size=20, weight="bold", color=self.C["text"]),
+                                ft.Text(APP_VERSION, size=11, color=self.C["muted"]),
+                            ], spacing=6),
                             ft.Container(expand=True),
                             ft.Row([self.status_icon, self.status_text], spacing=4),
                         ]),

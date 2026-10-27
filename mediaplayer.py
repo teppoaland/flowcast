@@ -19,6 +19,17 @@ app.config["MAX_CONTENT_LENGTH"] = 2000 * 1024 * 1024  # 2000 MB
 _SCAN_LOCK = threading.Lock()
 
 BASE_DIR = Path(__file__).parent
+
+
+def _read_version() -> str:
+    """Read the product version from the VERSION file next to this script."""
+    try:
+        return (BASE_DIR / "VERSION").read_text(encoding="utf-8").strip() or "0.0.0"
+    except OSError:
+        return "0.0.0"
+
+
+APP_VERSION = _read_version()
 DATA_ROOT = Path(os.environ.get("FLOWCAST_DATA_DIR", str(BASE_DIR.parent)))
 PORT = int(os.environ.get("FLOWCAST_PORT", "5010"))
 HOST = os.environ.get("FLOWCAST_HOST", "0.0.0.0")
@@ -390,7 +401,7 @@ def favorites():
 
 @app.route("/adminloginhere")
 def admin():
-    return render_template("loading.html")
+    return render_template("loading.html", app_version=APP_VERSION)
 
 
 @app.route("/adminpanel")
@@ -406,14 +417,14 @@ def adminpanel():
     guest_dir = str(MEDIA_GUEST_DIR).replace("\\", "/")
     data = load_playlist()
     admin_ui = data.get("admin_ui", {})
-    return render_template("admin.html", display_url=display_url, images_url=images_url, videos_url=videos_url, fav_url=fav_url, guest_url=guest_url, favorites_dir=favorites_dir, general_dir=general_dir, guest_dir=guest_dir, admin_ui=admin_ui)
+    return render_template("admin.html", display_url=display_url, images_url=images_url, videos_url=videos_url, fav_url=fav_url, guest_url=guest_url, favorites_dir=favorites_dir, general_dir=general_dir, guest_dir=guest_dir, admin_ui=admin_ui, app_version=APP_VERSION)
 
 
 @app.route("/adminsettings")
 def adminsettings():
     data = load_playlist()
     admin_ui = data.get("admin_ui", {})
-    return render_template("settings.html", admin_ui=admin_ui)
+    return render_template("settings.html", admin_ui=admin_ui, app_version=APP_VERSION)
 
 
 @app.route("/api/admin-ui", methods=["GET"])
@@ -436,7 +447,7 @@ def api_save_admin_ui():
 
 @app.route("/api/ping")
 def api_ping():
-    return jsonify({"ok": True})
+    return jsonify({"ok": True, "version": APP_VERSION})
 
 
 @app.route("/guest")
@@ -445,7 +456,7 @@ def guest():
     display_url = f"{base}/display"
     images_url = f"{base}/img"
     videos_url = f"{base}/vid"
-    return render_template("admin_guest.html", display_url=display_url, images_url=images_url, videos_url=videos_url)
+    return render_template("admin_guest.html", display_url=display_url, images_url=images_url, videos_url=videos_url, app_version=APP_VERSION)
 
 
 @app.route("/api/playlist", methods=["GET"])
@@ -1277,7 +1288,7 @@ def api_external_delete_file():
 def api_android_ping():
     """Lightweight ping that also returns the server IP so the Android app can verify connectivity."""
     ip = get_local_ip()
-    return jsonify({"ok": True, "server_ip": ip, "port": PORT})
+    return jsonify({"ok": True, "server_ip": ip, "port": PORT, "version": APP_VERSION})
 
 
 @app.route("/api/android/folders", methods=["GET"])
@@ -1436,7 +1447,8 @@ def set_security_headers(response):
 
 if __name__ == "__main__":
     ip = get_local_ip()
-    print(f"\n  Admin:   http://{ip}:{PORT}/adminloginhere  (latautuu -> /adminpanel)")
+    print(f"\n  FlowCast {APP_VERSION}")
+    print(f"  Admin:   http://{ip}:{PORT}/adminloginhere  (latautuu -> /adminpanel)")
     print(f"  Guest:   http://{ip}:{PORT}/guest")
     print(f"  Näyttö:  http://{ip}:{PORT}/display")
     print(f"  Kuvat:   http://{ip}:{PORT}/img")

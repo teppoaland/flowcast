@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FlowCast — Käynnistyy...</title>
+    <title>FlowCast {{ app_version }} — Käynnistyy...</title>
     <style>
         * {
             box-sizing: border-box;
@@ -30,6 +30,13 @@
             font-size: 1.6rem;
             margin-bottom: 16px;
             font-weight: 600;
+        }
+
+        .version-badge {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #888;
+            margin-left: 4px;
         }
 
         .loader-box p {
@@ -86,7 +93,7 @@
 
 <body>
     <div class="loader-box">
-        <h1>FlowCast</h1>
+        <h1>FlowCast <span class="version-badge">{{ app_version }}</span></h1>
         <p>Palvelu käynnistyy</p>
         <div class="dots">
             <span></span><span></span><span></span>

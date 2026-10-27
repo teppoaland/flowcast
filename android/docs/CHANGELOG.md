@@ -1,5 +1,14 @@
 # FlowCast Android — Changelog
 
+## v10.01 (2026-10-27) — Tuoteversio käyttöön
+
+### Muutettu
+- `APP_VERSION` = `10.01` — sama numero kuin palvelimen `VERSION`-tiedostossa (`android/VERSION` päivitetty)
+- Yläpalkissa pieni versiotunnus `FlowCast`-otsikon vieressä
+- Palvelimen `GET /api/android/ping` palauttaa nyt myös `version`-kentän
+
+---
+
 ## v2.1.3 (2026-05-28) — Native Navigation Bar
 
 ### Muutettu

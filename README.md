@@ -1,4 +1,4 @@
-# FlowCast
+# FlowCast <small>10.01</small>
 
 Itse ylläpidettävä 24/7 info-TV ja mediasoitin sisäverkkoon. FlowCast pyörittää
 kuva-, video- ja URL-sisältöä missä tahansa selaimellisessa laitteessa —
@@ -77,6 +77,7 @@ mediaplayer.bat
 ```
 mediaplayer.py          Flask-palvelin
 mediaplayer.bat         Käynnistysskripti (Windows)
+VERSION                 Tuoteversio (10.01)
 templates/              Näyttö- ja admin-näkymät
 tools/                  duplicate_finder.py — duplikaattien etsintä
 docs/changelog.md       Muutosloki
