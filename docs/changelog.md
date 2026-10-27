@@ -1,5 +1,13 @@
 # CHANGELOG - FlowCast
 
+## [10.02] - 2026-10-27
+
+### Käynnistysbatti: ajokansio ja datakansion tiedotus (v10.02)
+- [mediaplayer.bat] `cd /d "%~dp0"` — skripti ajaa aina oman kansionsa juuresta, joten `venv\` ja `mediaplayer.py` löytyvät riippumatta siitä, mistä kansiosta käynnistys tehdään
+- [mediaplayer.bat] Banneri tulostaa käytössä olevan `FLOWCAST_DATA_DIR`-juuren tai ilmoittaa oletuksen (projektikansion yläkansio); kommentti pysyvästä `setx`-asetuksesta
+- [README.md] Selvennetty, mihin `venv\` syntyy ja mihin mediakansiot syntyvät ilman `FLOWCAST_DATA_DIR`-asetusta + `setx`-esimerkki
+- [VERSION, android/VERSION, android/main.py] `10.02` — versiot pidetään samana
+
 ## [10.01] - 2026-10-27
 
 ### Tuotteen versionumero käyttöön (v10.01)

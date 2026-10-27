@@ -1,5 +1,12 @@
 # FlowCast Android — Changelog
 
+## v10.02 (2026-10-27) — Versiot yhdenmukaisiksi
+
+- `APP_VERSION` = `10.02`, sama numero kuin palvelimen `VERSION`-tiedostossa
+- Ei toiminnallisia muutoksia; palvelimen käynnistysbattia (`mediaplayer.bat`) parannettu (ajokansio + datakansion tiedotus)
+
+---
+
 ## v10.01 (2026-10-27) — Tuoteversio käyttöön
 
 ### Muutettu

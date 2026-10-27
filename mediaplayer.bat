@@ -5,7 +5,12 @@ title FlowCast - Start
 :: ===========================================================
 :: 0. ASETUKSET (ymparistomuuttujat, valinnainen)
 :: ===========================================================
+:: Aja aina taman skriptin kansiosta: venv ja mediaplayer.py ovat tassa
+cd /d "%~dp0"
+
 if not defined FLOWCAST_PORT set FLOWCAST_PORT=5010
+:: Mediakansioiden juuri. Jos ei asetettu, oletus = taman kansion ylakansio.
+:: Pysyva asetus: setx FLOWCAST_DATA_DIR "C:\FlowCastData"
 
 :: ===========================================================
 :: 1. PYTHON-TARKISTUS
@@ -83,6 +88,8 @@ echo ===================================================
 echo   FLOWCAST KAYNNISTYY
 echo   Admin:   http://127.0.0.1:%FLOWCAST_PORT%/adminloginhere
 echo   Naytto:  http://127.0.0.1:%FLOWCAST_PORT%/display
+if defined FLOWCAST_DATA_DIR echo   Data:    %FLOWCAST_DATA_DIR%
+if not defined FLOWCAST_DATA_DIR echo   Data:    oletus - taman kansion ylakansio
 echo ===================================================
 echo.
 

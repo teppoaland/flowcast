@@ -12,7 +12,7 @@ import flet as ft
 import httpx
 
 APP_NAME = "FlowCast Pro"
-APP_VERSION = "10.01"
+APP_VERSION = "10.02"
 DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = 5010
 DEFAULT_TARGET = "android_upload"

@@ -34,6 +34,10 @@ videota.
 
 Kaksoisklikkaa `mediaplayer.bat`. Skripti luo virtuaaliympäristön (`venv\`),
 asentaa riippuvuudet, käynnistää palvelimen ja avaa admin-sivun selaimeen.
+`venv\` syntyy FlowCast-kansion juureen — skripti siirtyy aina oman kansionsa
+juureen, joten se toimii myös muualta käynnistettynä. Mediakansiot syntyvät
+`FLOWCAST_DATA_DIR`-juureen; ilman asetusta ne syntyvät projektikansion
+yläkansioon.
 
 ### Käsin
 
@@ -70,6 +74,12 @@ avattiin, joten kiinteitä IP-osoitteita ei tarvita.
 set FLOWCAST_PORT=8080
 set FLOWCAST_DATA_DIR=D:\FlowCastData
 mediaplayer.bat
+```
+
+Pysyvä käyttäjäkohtainen asetus (PowerShell):
+
+```powershell
+setx FLOWCAST_DATA_DIR "D:\FlowCastData"
 ```
 
 ## Hakemistorakenne
