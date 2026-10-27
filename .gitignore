@@ -67,3 +67,7 @@ temp/
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# ── Paikallinen muisti ja agenttisäännöt (eivät julkiseen repoon) ──
+memory-bank/
+.clinerules/
