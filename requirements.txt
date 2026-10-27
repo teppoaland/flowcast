@@ -1,0 +1,13 @@
+# MediaPlayer — Python-riippuvuudet
+#
+# ESIASENNUS:
+#   Python 3.12+ PATH:ssa — ainoa vaatimus ennen automation.bat:ia
+#   https://www.python.org/downloads/
+#   Asennusvelhossa: ruksaa "Add python.exe to PATH"
+#
+# KÄYNNISTYS:
+#   Aja mediaplayer.bat projektin juuresta
+#   → Luo venv, asentaa paketit, käynnistää palvelimen portissa 5010
+
+Flask==3.1.3
+Werkzeug==3.1.6

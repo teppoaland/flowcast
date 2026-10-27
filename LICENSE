@@ -1,0 +1,17 @@
+Copyright (c) 2026 Teppo Ålander
+All rights reserved.
+
+FlowCast-projekti kokonaisuudessaan (lähdekoodi, dokumentaatio ja projektin
+omat tiedostot) on tekijänsä omaisuutta. Mitään osaa tästä projektista ei saa
+kopioida, muokata, julkaista uudelleen, levittää eikä käyttää omissa
+projekteissa tai kaupallisesti ilman tekijän kirjallista lupaa.
+
+Julkinen repositorio on tarkoitettu katselua ja tutustumista varten. Pelkkä
+katselu ei oikeuta ottamaan koodia käyttöön.
+
+Repositorio sisältää vain lähdekoodin. Se ei sisällä kuvia, videoita eikä muuta
+sisältöä. Käyttäjä vastaa itse siitä, että palveluun lisätty media-aineisto on
+lisensoitu tai käyttöön on muuten oikeudet.
+
+Kolmannen osapuolen kirjastot ja työkalut ovat omilla lisensseillään ja niitä
+käytetään erillisinä riippuvuuksina. Luettelo: THIRD_PARTY_NOTICES.md.

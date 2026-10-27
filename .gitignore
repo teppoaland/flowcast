@@ -1,0 +1,69 @@
+# ── Henkilökohtainen sisältö: ei koskaan repoon ──
+playlist.json
+media_static/
+media_general/
+media_guest/
+media_favorites/
+media_converted/
+Archive/
+android_upload/
+data/
+
+# ── Kuva- ja videotiedostot (sisältö, ei koodia) ──
+*.jpg
+*.jpeg
+*.png
+*.mp4
+*.avi
+*.wmv
+*.mov
+*.mkv
+*.gif
+*.webp
+*.bmp
+*.heic
+
+# ── Binäärit ja työkalut ──
+ffmpeg.exe
+ffprobe.exe
+
+# ── Python ──
+__pycache__/
+*.py[cod]
+*.pyo
+venv/
+.venv/
+env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+*.egg-info/
+.eggs/
+
+# ── Android / build ──
+android/build/
+android/.dart_tool/
+android/.flutter-plugins*
+*.apk
+
+# ── Lokit ja väliaikaiset ──
+*.log
+logs/
+tmp/
+temp/
+*.tmp
+*.bak
+*.backup
+*.old
+
+# ── IDE / OS ──
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+desktop.ini

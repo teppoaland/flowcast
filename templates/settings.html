@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="fi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FlowCast — Admin Settings</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <style>
+        :root {
+            --bg: #1a1a2e;
+            --panel: #16213e;
+            --accent: #0f3460;
+            --highlight: #e94560;
+            --text: #eee;
+            --muted: #888;
+            --border: #2a2a4a;
+            --green: #2ecc71;
+            --red: #e74c3c;
+            --blue: #2980b9;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: system-ui, sans-serif;
+            padding: 20px;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        h1 { font-size: 1.3rem; margin-bottom: 4px; }
+        .subtitle { font-size: 0.85rem; color: var(--muted); margin-bottom: 20px; }
+
+        .panel {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 14px;
+        }
+
+        .panel h2 {
+            font-size: 0.8rem;
+            margin-bottom: 12px;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 6px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+        }
+        .row:last-child { border-bottom: none; }
+
+        .row .label {
+            flex: 1;
+            font-size: 0.9rem;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 36px;
+            height: 20px;
+            flex-shrink: 0;
+        }
+        .switch input { opacity: 0; width: 0; height: 0; position: absolute; }
+        .slider {
+            position: absolute; cursor: pointer; inset: 0;
+            background: #555; border-radius: 20px; transition: 0.2s;
+        }
+        .slider:before {
+            content: ''; position: absolute; height: 14px; width: 14px;
+            left: 3px; bottom: 3px; background: #fff; border-radius: 50%; transition: 0.2s;
+        }
+        .switch input:checked + .slider { background: var(--green); }
+        .switch input:checked + .slider:before { transform: translateX(16px); }
+
+        .toggle-label {
+            font-size: 0.8rem;
+            color: var(--muted);
+            width: 60px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+
+        button {
+            background: var(--blue);
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            padding: 8px 20px;
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+        button:hover { opacity: 0.85; }
+
+        .back-link {
+            display: inline-block;
+            margin-bottom: 16px;
+            color: #5dade2;
+            text-decoration: none;
+            font-size: 0.85rem;
+        }
+        .back-link:hover { text-decoration: underline; }
+
+        #save-status {
+            margin-left: 12px;
+            font-size: 0.85rem;
+            color: var(--green);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        #save-status.show { opacity: 1; }
+    </style>
+</head>
+
+<body>
+    <a href="/adminpanel" class="back-link">&larr; Takaisin admin-paneeliin</a>
+    <h1>Admin-näkymän asetukset</h1>
+    <p class="subtitle">Määritä mitkä kentät ja osiot näytetään admin-paneelissa. Piilotettujen osioiden asetukset säilyvät voimassa.</p>
+
+    <div class="panel">
+        <h2>Admin asetukset — näytettävät kentät</h2>
+        <div id="fields-container"></div>
+    </div>
+
+    <div class="panel">
+        <h2>Sisällön hallinta — näytettävät osiot</h2>
+        <div id="sections-container"></div>
+    </div>
+
+    <div style="display:flex; align-items:center;">
+        <button onclick="saveSettings()">Tallenna asetukset</button>
+        <span id="save-status">Tallennettu!</span>
+    </div>
+
+    <script>
+        const adminUi = {{ admin_ui|tojson }};
+
+        const fieldLabels = {
+            default_duration: 'Sisällön näyttöaika (s)',
+            fade_enabled: 'Fade',
+            fade_duration: 'Fade-kesto',
+            fade_type: 'Siirtymätyyppi',
+            video_audio: 'Äänet (video)',
+            video_duration: 'Videot näyttöaika',
+            show_video_timer: 'Näytä video toistoaika',
+            playback_buttons: 'Toistopainikkeet',
+            content_filter: 'Näytä sisältö',
+            show_filename: 'Näytä tiedoston nimi'
+        };
+
+        const sectionLabels = {
+            custom: '1. Kustomoitu sisältö',
+            general: '2. Sisältö default asetuksilla',
+            external: '3. Liitetyt hakemistot',
+            favorites: '4. Parhaat sisältö',
+            guest: '5. Guest sisältö'
+        };
+
+        function renderFields() {
+            const show = adminUi.show_fields || {};
+            const container = document.getElementById('fields-container');
+            let html = '';
+            for (const [key, label] of Object.entries(fieldLabels)) {
+                const checked = show[key] !== false ? 'checked' : '';
+                html += `<div class="row">
+                    <span class="label">${label}</span>
+                    <label class="switch">
+                        <input type="checkbox" data-field="${key}" ${checked} onchange="markDirty()">
+                        <span class="slider"></span>
+                    </label>
+                </div>`;
+            }
+            container.innerHTML = html;
+        }
+
+        function renderSections() {
+            const sections = adminUi.sections || {};
+            const container = document.getElementById('sections-container');
+            let html = '';
+            for (const [key, label] of Object.entries(sectionLabels)) {
+                const sec = sections[key] || {};
+                const enabledChecked = sec.enabled !== false ? 'checked' : '';
+                const openChecked = sec.open === true ? 'checked' : '';
+                html += `<div class="row">
+                    <span class="label">${label}</span>
+                    <label class="switch" title="Näytä osio">
+                        <input type="checkbox" data-section="${key}" data-prop="enabled" ${enabledChecked} onchange="markDirty()">
+                        <span class="slider"></span>
+                    </label>
+                    <span class="toggle-label">Auki</span>
+                    <label class="switch" title="Oletuksena auki">
+                        <input type="checkbox" data-section="${key}" data-prop="open" ${openChecked} onchange="markDirty()">
+                        <span class="slider"></span>
+                    </label>
+                </div>`;
+            }
+            container.innerHTML = html;
+        }
+
+        function markDirty() {
+            document.getElementById('save-status').classList.remove('show');
+        }
+
+        async function saveSettings() {
+            const showFields = {};
+            document.querySelectorAll('#fields-container input[data-field]').forEach(el => {
+                showFields[el.dataset.field] = el.checked;
+            });
+
+            const sections = {};
+            document.querySelectorAll('#sections-container input[data-section]').forEach(el => {
+                const key = el.dataset.section;
+                if (!sections[key]) sections[key] = {};
+                sections[key][el.dataset.prop] = el.checked;
+            });
+
+            const res = await fetch('/api/admin-ui', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ show_fields: showFields, sections: sections })
+            });
+
+            if (res.ok) {
+                const status = document.getElementById('save-status');
+                status.classList.add('show');
+                setTimeout(() => status.classList.remove('show'), 2000);
+            } else {
+                alert('Tallennus epäonnistui.');
+            }
+        }
+
+        renderFields();
+        renderSections();
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,987 @@
+<!DOCTYPE html>
+<html lang="fi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ 'FlowCast – Suosikit' if favorites_only|default(false) else 'FlowCast' }}</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+            background: #000;
+            overflow: hidden;
+        }
+
+        #slot {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 1;
+        }
+
+        #slot img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        #slot video {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        #slot iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        #tap-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.75);
+            cursor: pointer;
+            transition: opacity 0.3s ease;
+        }
+
+        #tap-overlay span {
+            color: #fff;
+            font-family: sans-serif;
+            font-size: 2rem;
+            opacity: 0.85;
+            pointer-events: none;
+            text-align: center;
+            padding: 1rem;
+        }
+
+        #playback-controls {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 10000;
+            display: none;
+            gap: 8px;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 8px;
+            padding: 8px 16px;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        #playback-controls.visible {
+            display: flex;
+        }
+
+        #playback-controls button {
+            background: rgba(255, 255, 255, 0.15);
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 4px;
+            padding: 6px 14px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            font-family: sans-serif;
+            line-height: 1;
+            min-width: 40px;
+            text-align: center;
+        }
+
+        #playback-controls button:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        #playback-controls button:active {
+            background: rgba(255, 255, 255, 0.45);
+        }
+
+        #btn-delete:hover {
+            background: rgba(255, 60, 60, 0.5) !important;
+            border-color: rgba(255, 60, 60, 0.7) !important;
+        }
+
+        #info-overlay {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            font-family: sans-serif;
+            font-size: 0.85rem;
+            color: rgba(255,255,255,0.7);
+            background: rgba(0,0,0,0.4);
+            border-radius: 6px;
+            padding: 6px 12px;
+            user-select: none;
+            -webkit-user-select: none;
+            pointer-events: none;
+        }
+
+        #video-timer { display: none; }
+        #filename-label { display: none; cursor: pointer; pointer-events: auto; }
+        #filename-label:hover { color: #fff; text-decoration: underline; }
+    </style>
+</head>
+
+<body>
+    <div id="tap-overlay"><span>&#9654; Napauta aloittaaksesi</span></div>
+    <div id="slot"></div>
+    <div id="info-overlay">
+        <div id="video-timer"></div>
+        <div id="filename-label"></div>
+    </div>
+    <div id="playback-controls">
+        <button id="btn-prev" title="Edellinen">&laquo;</button>
+        <button id="btn-playpause" title="Play/Pause">&#9654;&#10074;&#10074;</button>
+        <button id="btn-next" title="Seuraava">&raquo;</button>
+        <button id="btn-favorite" title="Lisaa suosikkeihin" onclick="addToFavorites()">&#10084;</button>
+        <button id="btn-delete" title="Poista kuva/video" onclick="deleteCurrentItem()">&#128465;</button>
+    </div>
+    <script>
+        const CONTENT_FILTER_OVERRIDE = {{ content_filter_override|tojson }};
+        const FAVORITES_ONLY = {{ favorites_only|default(false)|tojson }};
+        let playlist = [];
+        let settings = {};
+        let generalFiles = [];
+        let externalFiles = [];
+        let guestFiles = [];
+        let favoritesFiles = [];
+        let mergedPlaylist = [];
+        let index = 0;
+        let currentIndex = -1;
+        let timer = null;
+        let timerEndTime = 0;
+        let audioUnlocked = false;
+        let isPaused = false;
+        let pausedRemaining = 0;
+        let currentVideo = null;
+        let lastGeneralEnabled = null;
+        let lastGuestEnabled = null;
+        let lastFavoritesEnabled = null;
+        let lastContentFilter = null;
+        let timerInterval = null;
+        let settingsPollTimer = null;
+
+        function formatTime(totalSeconds) {
+            if (totalSeconds <= 0) return '0:00';
+            const m = Math.floor(totalSeconds / 60);
+            const s = Math.floor(totalSeconds % 60);
+            return m + ':' + String(s).padStart(2, '0');
+        }
+
+        function updateInfoOverlay(item) {
+            const timerEl = document.getElementById('video-timer');
+            const nameEl = document.getElementById('filename-label');
+            // Clear previous interval
+            if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+            timerEl.style.display = 'none';
+            nameEl.style.display = 'none';
+            // Filename
+            const showFn = FAVORITES_ONLY ? (settings.favorites_show_filename !== false) : (settings.show_filename !== false);
+            if (showFn && item.name) {
+                nameEl.textContent = item.name;
+                nameEl.style.display = 'block';
+                nameEl.onclick = function() {
+                    var url = item.src;
+                    if (url.startsWith('/')) {
+                        url = window.location.protocol + '//' + window.location.host + url;
+                    }
+                    var copied = false;
+                    // Yritä clipboard API:a
+                    if (navigator.clipboard && navigator.clipboard.writeText) {
+                        navigator.clipboard.writeText(url).then(function() { copied = true; showCopied(); })
+                            .catch(function() { fallbackCopy(url); });
+                    } else {
+                        fallbackCopy(url);
+                    }
+                    function showCopied() {
+                        var orig = nameEl.textContent;
+                        nameEl.textContent = '✓ Kopioitu leikepöydälle!';
+                        nameEl.style.color = '#2ecc71';
+                        setTimeout(function() {
+                            nameEl.textContent = orig;
+                            nameEl.style.color = '';
+                        }, 2000);
+                    }
+                    function fallbackCopy(text) {
+                        var ta = document.createElement('textarea');
+                        ta.value = text;
+                        ta.style.position = 'fixed';
+                        ta.style.left = '-9999px';
+                        ta.style.top = '0';
+                        document.body.appendChild(ta);
+                        ta.focus();
+                        ta.select();
+                        try { document.execCommand('copy'); copied = true; } catch(e) {}
+                        document.body.removeChild(ta);
+                        if (copied) showCopied();
+                    }
+                };
+            }
+            // Video timer
+            if (settings.show_video_timer !== false && item.type === 'video') {
+                timerEl.style.display = 'block';
+                const updateTimer = () => {
+                    const remaining = Math.max(0, (timerEndTime - Date.now()) / 1000);
+                    timerEl.textContent = formatTime(remaining);
+                };
+                updateTimer();
+                timerInterval = setInterval(updateTimer, 500);
+            }
+        }
+
+        function dismissOverlay() {
+            const ov = document.getElementById('tap-overlay');
+            if (!ov) return;
+            ov.style.opacity = '0';
+            ov.style.pointerEvents = 'none';
+            setTimeout(() => { if (ov.parentNode) ov.remove(); }, 400);
+        }
+
+        function unlockAudio() {
+            if (audioUnlocked) return;
+            audioUnlocked = true;
+            const v = document.querySelector('#slot video');
+            if (v && settings.video_audio) {
+                v.muted = false;
+                v.play().catch(() => { });
+            }
+        }
+
+        let overlayTimer = setTimeout(function () {
+            dismissOverlay();
+            unlockAudio();
+        }, 5000);
+
+        document.getElementById('tap-overlay').addEventListener('click', function () {
+            clearTimeout(overlayTimer);
+            unlockAudio();
+            dismissOverlay();
+        }, { once: true });
+
+        /** Fetch all data once.  Subsequent calls are no-ops unless
+         *  'force' is true (used when a settings-change is detected). */
+        let _fetchPromise = null;
+
+        async function fetchPlaylist(force) {
+            if (!force && _fetchPromise) return _fetchPromise;
+            _fetchPromise = (async () => {
+                if (FAVORITES_ONLY) {
+                    const [res1, res5] = await Promise.all([
+                        fetch('/api/playlist?t=' + Date.now()),
+                        fetch('/api/favorites/list?t=' + Date.now())
+                    ]);
+                    const data = await res1.json();
+                    settings = data.settings;
+                    playlist = (data.items || []).filter(i => !i.disabled);
+                    generalFiles = [];
+                    externalFiles = [];
+                    guestFiles = [];
+                    favoritesFiles = await res5.json();
+                } else {
+                    const [res1, res2, res3, res4, res5] = await Promise.all([
+                        fetch('/api/playlist?t=' + Date.now()),
+                        fetch('/api/general/list?t=' + Date.now()),
+                        fetch('/api/external/list?t=' + Date.now()),
+                        fetch('/api/guest/list?t=' + Date.now()),
+                        fetch('/api/favorites/list?t=' + Date.now())
+                    ]);
+                    const data = await res1.json();
+                    settings = data.settings;
+                    playlist = (data.items || []).filter(i => !i.disabled);
+                    generalFiles = await res2.json();
+                    const extData = await res3.json();
+                    externalFiles = extData.files || [];
+                    guestFiles = await res4.json();
+                    favoritesFiles = await res5.json();
+                }
+            })();
+            return _fetchPromise;
+        }
+
+        /** Lightweight poll: only checks if playlist.json settings changed.
+         *  Triggers a full refetch + rebuild when they do. */
+        async function pollSettings() {
+            try {
+                const res = await fetch('/api/playlist?t=' + Date.now());
+                const data = await res.json();
+                const newSettings = data.settings;
+                // Compare with last-known settings
+                if (FAVORITES_ONLY) {
+                    var prev = JSON.stringify({
+                        content_filter: settings.content_filter,
+                        video_duration: settings.video_duration,
+                        video_audio: settings.video_audio,
+                        favorites_playback_buttons: settings.favorites_playback_buttons,
+                        favorites_show_filename: settings.favorites_show_filename
+                    });
+                    var curr = JSON.stringify({
+                        content_filter: newSettings.content_filter,
+                        video_duration: newSettings.video_duration,
+                        video_audio: newSettings.video_audio,
+                        favorites_playback_buttons: newSettings.favorites_playback_buttons,
+                        favorites_show_filename: newSettings.favorites_show_filename
+                    });
+                } else {
+                    var prev = JSON.stringify({
+                        general_enabled: settings.general_enabled,
+                        guest_enabled: settings.guest_enabled,
+                        favorites_enabled: settings.favorites_enabled,
+                        content_filter: settings.content_filter,
+                        video_duration: settings.video_duration,
+                        video_audio: settings.video_audio
+                    });
+                    var curr = JSON.stringify({
+                        general_enabled: newSettings.general_enabled,
+                        guest_enabled: newSettings.guest_enabled,
+                        favorites_enabled: newSettings.favorites_enabled,
+                        content_filter: newSettings.content_filter,
+                        video_duration: newSettings.video_duration,
+                        video_audio: newSettings.video_audio
+                    });
+                }
+                if (prev !== curr) {
+                    console.log('[poll] Settings changed, rebuilding playlist');
+                    _fetchPromise = null;  // allow full refetch
+                    await fetchPlaylist(true);
+                    rebuildPlaylist('settings-changed');
+                }
+            } catch (e) {
+                // Silently ignore poll failures
+            }
+        }
+
+        function fadeDurationForItem(item) {
+            const fo = item.fade_override;
+            if (fo === null || fo === undefined) {
+                if (!settings.fade_enabled) return 0;
+                return (settings.fade_duration || 1) * 1000;
+            }
+            return fo * 1000;
+        }
+
+        const FADE_TYPES = ['normaali', 'liuku-vasen', 'liuku-oikea', 'zoom-in', 'zoom-ulos'];
+
+        function getEffectiveFadeType(item) {
+            const t = item.fade_type_override || settings.fade_type || 'normaali';
+            if (t === 'random') return FADE_TYPES[Math.floor(Math.random() * FADE_TYPES.length)];
+            return t;
+        }
+
+        function showItem(item) {
+            const slot = document.getElementById('slot');
+            const fd = fadeDurationForItem(item);
+            const fadeType = getEffectiveFadeType(item);
+            const fdSec = fd / 1000;
+            isPaused = false;
+            pausedRemaining = 0;
+            currentVideo = null;
+            updatePlaybackControls();
+
+            function doEnter() {
+                slot.innerHTML = '';
+                const el = buildContent(item);
+                slot.appendChild(el);
+                if (item.type === 'video') currentVideo = el;
+                if (item.type === 'image' || item.type === 'video') {
+                    let errorFired = false;
+                    const skipOnError = function () {
+                        if (errorFired) return;
+                        errorFired = true;
+                        clearTimeout(timer);
+                        next();
+                    };
+                    el.addEventListener('error', skipOnError);
+                }
+                if (fd > 0) {
+                    if (fadeType === 'normaali') {
+                        slot.style.transform = '';
+                        slot.style.transition = `opacity ${fdSec}s ease`;
+                        slot.style.opacity = '1';
+                    } else if (fadeType === 'liuku-vasen') {
+                        slot.style.transition = 'none';
+                        slot.style.opacity = '1';
+                        slot.style.transform = 'translateX(100%)';
+                        requestAnimationFrame(() => requestAnimationFrame(() => {
+                            slot.style.transition = `transform ${fdSec}s ease`;
+                            slot.style.transform = 'translateX(0)';
+                        }));
+                    } else if (fadeType === 'liuku-oikea') {
+                        slot.style.transition = 'none';
+                        slot.style.opacity = '1';
+                        slot.style.transform = 'translateX(-100%)';
+                        requestAnimationFrame(() => requestAnimationFrame(() => {
+                            slot.style.transition = `transform ${fdSec}s ease`;
+                            slot.style.transform = 'translateX(0)';
+                        }));
+                    } else if (fadeType === 'zoom-in') {
+                        slot.style.transition = 'none';
+                        slot.style.transform = 'scale(0.9)';
+                        slot.style.opacity = '0';
+                        requestAnimationFrame(() => requestAnimationFrame(() => {
+                            slot.style.transition = `transform ${fdSec}s ease, opacity ${fdSec}s ease`;
+                            slot.style.transform = 'scale(1)';
+                            slot.style.opacity = '1';
+                            playVideo();
+                        }));
+                        return;
+                    } else if (fadeType === 'zoom-ulos') {
+                        slot.style.transition = 'none';
+                        slot.style.transform = 'scale(1.1)';
+                        slot.style.opacity = '0';
+                        requestAnimationFrame(() => requestAnimationFrame(() => {
+                            slot.style.transition = `transform ${fdSec}s ease, opacity ${fdSec}s ease`;
+                            slot.style.transform = 'scale(1)';
+                            slot.style.opacity = '1';
+                            playVideo();
+                        }));
+                        return;
+                    }
+                } else {
+                    slot.style.transition = 'none';
+                    slot.style.opacity = '1';
+                    slot.style.transform = '';
+                }
+                playVideo();
+
+                function playVideo() {
+                    if (item.type === 'video' && settings.video_duration === 'full') {
+                        const setRealDuration = () => {
+                            const realSec = (el.duration && isFinite(el.duration)) ? el.duration : 3600;
+                            timerEndTime = Date.now() + realSec * 1000;
+                            updateInfoOverlay(item);
+                        };
+                        if (el.readyState >= 1) {
+                            setRealDuration();
+                        } else {
+                            el.addEventListener('loadedmetadata', setRealDuration, { once: true });
+                            // Fallback: show estimated time until metadata loads
+                            timerEndTime = Date.now() + 3600 * 1000;
+                            updateInfoOverlay(item);
+                        }
+                        timer = setTimeout(next, 3600 * 1000);
+                        el.addEventListener('ended', () => { clearTimeout(timer); next(); });
+                        el.play().then(() => { if (!el.muted) audioUnlocked = true; dismissOverlay(); }).catch(() => {
+                            el.muted = true;
+                            el.play().catch(() => { clearTimeout(timer); timer = setTimeout(next, 3000); });
+                        });
+                    } else {
+                        const duration = (item.duration || settings.default_duration || 60) * 1000;
+                        timerEndTime = Date.now() + duration;
+                        updateInfoOverlay(item);
+                        timer = setTimeout(next, duration);
+                        if (item.type === 'video') {
+                            // Replace timer with actual video duration once metadata loads
+                            const setRealDuration = () => {
+                                if (el.duration && isFinite(el.duration)) {
+                                    timerEndTime = Date.now() + el.duration * 1000;
+                                    updateInfoOverlay(item);
+                                }
+                            };
+                            if (el.readyState >= 1) {
+                                setRealDuration();
+                            } else {
+                                el.addEventListener('loadedmetadata', setRealDuration, { once: true });
+                            }
+                            el.play().then(() => { if (!el.muted) audioUnlocked = true; dismissOverlay(); }).catch(() => { el.muted = true; el.play().catch(() => { }); });
+                        }
+                    }
+                }
+            }
+
+            if (fd > 0) {
+                if (fadeType === 'normaali') {
+                    slot.style.transition = `opacity ${fdSec}s ease`;
+                    slot.style.opacity = '0';
+                    setTimeout(doEnter, fd);
+                } else if (fadeType === 'liuku-vasen') {
+                    slot.style.transition = `opacity ${fdSec / 2}s ease`;
+                    slot.style.opacity = '0';
+                    setTimeout(doEnter, fd / 2);
+                } else if (fadeType === 'liuku-oikea') {
+                    slot.style.transition = `opacity ${fdSec / 2}s ease`;
+                    slot.style.opacity = '0';
+                    setTimeout(doEnter, fd / 2);
+                } else if (fadeType === 'zoom-in') {
+                    slot.style.transition = `transform ${fdSec}s ease, opacity ${fdSec}s ease`;
+                    slot.style.transform = 'scale(1.1)';
+                    slot.style.opacity = '0';
+                    setTimeout(doEnter, fd);
+                } else if (fadeType === 'zoom-ulos') {
+                    slot.style.transition = `transform ${fdSec}s ease, opacity ${fdSec}s ease`;
+                    slot.style.transform = 'scale(0.9)';
+                    slot.style.opacity = '0';
+                    setTimeout(doEnter, fd);
+                }
+            } else {
+                slot.style.transition = 'none';
+                slot.style.opacity = '1';
+                slot.style.transform = '';
+                doEnter();
+            }
+        }
+        function buildContent(item) {
+            if (item.type === 'image') {
+                const img = document.createElement('img');
+                img.src = item.src;
+                return img;
+            } else if (item.type === 'video') {
+                const v = document.createElement('video');
+                v.src = item.src;
+                v.autoplay = true;
+                v.muted = !settings.video_audio;
+                v.loop = settings.video_duration !== 'full';
+                v.setAttribute('playsinline', '');
+                v.style.width = '100%';
+                v.style.height = '100%';
+                v.style.objectFit = 'contain';
+                return v;
+            } else {
+                const frame = document.createElement('iframe');
+                frame.src = item.src;
+                frame.style.width = '100%';
+                frame.style.height = '100%';
+                frame.style.border = 'none';
+                frame.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms allow-popups');
+                return frame;
+            }
+        }
+
+        /** Build (or rebuild) the merged playlist from all sources.
+         *  Playlist items (section 1) stay in user-defined order first.
+         *  Other enabled sources are collected per-source, shuffled only if
+         *  their respective "Sekoita" setting is enabled, then interleaved
+         *  (round-robin) to mix images/videos from all sources. */
+        function rebuildPlaylist(rebuildReason) {
+            const effectiveFilter = CONTENT_FILTER_OVERRIDE || (settings.content_filter || 'all');
+
+            const isIncluded = function(item) {
+                if (effectiveFilter === 'images') return item.type === 'image';
+                if (effectiveFilter === 'videos') return item.type === 'video';
+                return true;
+            };
+
+            // 1. Playlist items (user-defined order, always first) ---------------
+            const playlistItems = FAVORITES_ONLY ? [] : playlist
+                .filter(function(i) { return !i.disabled && isIncluded(i); })
+                .map(function(i) { i._source = 'playlist'; return i; });
+
+            // 2. Collect items per source ----------------------------------------
+            var generalItems = [];
+            var externalItems = [];
+            var guestItems = [];
+            var favoritesItems = [];
+            var srcCounts = { general: 0, external: 0, guest: 0, favorites: 0 };
+
+            if (!FAVORITES_ONLY) {
+                if (settings.general_enabled !== false) {
+                    for (var gi = 0; gi < generalFiles.length; gi++) {
+                        if (isIncluded(generalFiles[gi])) {
+                            generalItems.push({ src: generalFiles[gi].src, type: generalFiles[gi].type,
+                                name: generalFiles[gi].name, filename: generalFiles[gi].filename,
+                                duration: generalFiles[gi].duration || null, _source: 'general' });
+                            srcCounts.general++;
+                        }
+                    }
+                }
+                for (var ei = 0; ei < externalFiles.length; ei++) {
+                    if (isIncluded(externalFiles[ei])) {
+                        externalItems.push({ src: externalFiles[ei].src, type: externalFiles[ei].type,
+                            name: externalFiles[ei].name, filename: externalFiles[ei].filename,
+                            duration: externalFiles[ei].duration || null, _source: 'external' });
+                        srcCounts.external++;
+                    }
+                }
+                if (settings.guest_enabled !== false) {
+                    for (var ui = 0; ui < guestFiles.length; ui++) {
+                        if (isIncluded(guestFiles[ui])) {
+                            guestItems.push({ src: guestFiles[ui].src, type: guestFiles[ui].type,
+                                name: guestFiles[ui].name, filename: guestFiles[ui].filename,
+                                duration: guestFiles[ui].duration || null, _source: 'guest' });
+                            srcCounts.guest++;
+                        }
+                    }
+                }
+            }
+            // Favorites: included when favorites_enabled is on, or always in FAVORITES_ONLY mode
+            if (FAVORITES_ONLY || settings.favorites_enabled !== false) {
+                for (var fi = 0; fi < favoritesFiles.length; fi++) {
+                    if (isIncluded(favoritesFiles[fi])) {
+                        favoritesItems.push({ src: favoritesFiles[fi].src, type: favoritesFiles[fi].type,
+                            name: favoritesFiles[fi].name, filename: favoritesFiles[fi].filename,
+                            duration: favoritesFiles[fi].duration || null, _source: 'favorites' });
+                        srcCounts.favorites++;
+                    }
+                }
+            }
+
+            // 3. Per-source shuffle (respect per-section "Sekoita" settings) ------
+            function shuffleArray(arr) {
+                for (var i = arr.length - 1; i > 0; i--) {
+                    var j = Math.floor(Math.random() * (i + 1));
+                    var tmp = arr[i]; arr[i] = arr[j]; arr[j] = tmp;
+                }
+            }
+
+            if (settings.general_shuffle_enabled !== false) shuffleArray(generalItems);
+            if (settings.external_shuffle_enabled !== false) shuffleArray(externalItems);
+            if (settings.guest_shuffle_enabled !== false) shuffleArray(guestItems);
+            if (settings.favorites_shuffle_enabled !== false) shuffleArray(favoritesItems);
+
+            // 4. Interleave sources (round-robin) to mix across sections ---------
+            var bulk = [];
+            var maxLen = Math.max(generalItems.length, externalItems.length,
+                                  guestItems.length, favoritesItems.length);
+            for (var k = 0; k < maxLen; k++) {
+                if (k < generalItems.length) bulk.push(generalItems[k]);
+                if (k < externalItems.length) bulk.push(externalItems[k]);
+                if (k < guestItems.length) bulk.push(guestItems[k]);
+                if (k < favoritesItems.length) bulk.push(favoritesItems[k]);
+            }
+
+            // 5. Deduplicate and merge: playlist first, then bulk ----------------
+            var seen = new Set();
+            var merged = [];
+
+            for (var pi = 0; pi < playlistItems.length; pi++) {
+                seen.add(playlistItems[pi].src);
+                merged.push(playlistItems[pi]);
+            }
+            for (var bi = 0; bi < bulk.length; bi++) {
+                if (!seen.has(bulk[bi].src)) {
+                    seen.add(bulk[bi].src);
+                    merged.push(bulk[bi]);
+                }
+            }
+
+            mergedPlaylist = merged;
+            index = 0;
+
+            if (rebuildReason) {
+                console.log('[rebuild] ' + rebuildReason +
+                    ' – ' + mergedPlaylist.length + ' items' +
+                    ' | general:' + srcCounts.general +
+                    ' external:' + srcCounts.external +
+                    ' guest:' + srcCounts.guest +
+                    ' favorites:' + srcCounts.favorites +
+                    ' | interleaved from per-source arrays');
+                if (merged.length > 0) {
+                    console.log('[rebuild] first 3:', merged.slice(0, 3).map(function(it) {
+                        return (it.name || it.src).split('/').pop();
+                    }));
+                }
+            }
+        }
+
+        async function isUrlReachable(url) {
+            try {
+                const ctrl = new AbortController();
+                const timeout = setTimeout(() => ctrl.abort(), 3000);
+                await fetch(url, { mode: 'no-cors', signal: ctrl.signal });
+                clearTimeout(timeout);
+                return true;
+            } catch (e) {
+                return false;
+            }
+        }
+
+        async function next() {
+            clearTimeout(timer);
+            if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+            isPaused = false;
+            pausedRemaining = 0;
+            const slot = document.getElementById('slot');
+            slot.style.transition = 'none';
+            slot.style.opacity = '1';
+            slot.style.transform = '';
+
+            // Fetch once, cached on subsequent calls
+            await fetchPlaylist(false);
+
+            // Detect setting changes
+            const effectiveFilter = CONTENT_FILTER_OVERRIDE || (settings.content_filter || 'all');
+            const generalChanged = lastGeneralEnabled !== null && lastGeneralEnabled !== (settings.general_enabled !== false);
+            const guestChanged = lastGuestEnabled !== null && lastGuestEnabled !== (settings.guest_enabled !== false);
+            const favoritesChanged = lastFavoritesEnabled !== null && lastFavoritesEnabled !== (settings.favorites_enabled !== false);
+            const filterChanged = lastContentFilter !== null && lastContentFilter !== effectiveFilter;
+
+            lastGeneralEnabled = settings.general_enabled !== false;
+            lastGuestEnabled = settings.guest_enabled !== false;
+            lastFavoritesEnabled = settings.favorites_enabled !== false;
+            lastContentFilter = effectiveFilter;
+
+            if (FAVORITES_ONLY) {
+                var generalActive = false;
+                var guestActive = false;
+                var favoritesActive = favoritesFiles.length > 0;
+                var hasBulk = favoritesActive;
+            } else {
+                var generalActive = settings.general_enabled !== false && generalFiles.length > 0;
+                var guestActive = settings.guest_enabled !== false && guestFiles.length > 0;
+                var favoritesActive = settings.favorites_enabled !== false && favoritesFiles.length > 0;
+                var hasBulk = generalActive || externalFiles.length > 0 || guestActive || favoritesActive;
+            }
+
+            // Rebuild when necessary: first load, wrap-around, or setting change
+            if (hasBulk) {
+                if (mergedPlaylist.length === 0 || index === 0 || generalChanged || guestChanged || favoritesChanged || filterChanged) {
+                    rebuildPlaylist(index === 0 && mergedPlaylist.length > 0 ? 'wrap-around' : 'init-or-change');
+                }
+            } else {
+                mergedPlaylist = [];
+            }
+
+            const active = hasBulk ? mergedPlaylist : playlist;
+
+            if (active.length === 0) {
+                slot.innerHTML = '';
+                currentIndex = -1;
+                updatePlaybackControls();
+                timerEndTime = Date.now() + 5000;
+                timer = setTimeout(next, 5000);
+                return;
+            }
+
+            if (index >= active.length) index = 0;
+            const item = active[index];
+            currentIndex = index;
+            index = (index + 1) % active.length;
+
+            if (item.type === 'url') {
+                const ok = await isUrlReachable(item.src);
+                if (!ok) {
+                    timer = setTimeout(next, 500);
+                    return;
+                }
+            }
+
+            showItem(item);
+        }
+
+        function updatePlaybackControls() {
+            const ctrl = document.getElementById('playback-controls');
+            if (FAVORITES_ONLY) {
+                const favPb = settings.favorites_playback_buttons || 'minimi';
+                if (favPb === 'off') {
+                    ctrl.classList.remove('visible');
+                } else {
+                    ctrl.classList.add('visible');
+                    // Minimi: show only << pause >>, hide heart and trash
+                    document.getElementById('btn-favorite').style.display = favPb === 'täysin' ? '' : 'none';
+                    document.getElementById('btn-delete').style.display = favPb === 'täysin' ? '' : 'none';
+                }
+            } else {
+                if (settings.playback_buttons !== false) {
+                    ctrl.classList.add('visible');
+                    document.getElementById('btn-favorite').style.display = '';
+                    document.getElementById('btn-delete').style.display = '';
+                } else {
+                    ctrl.classList.remove('visible');
+                }
+            }
+            const btn = document.getElementById('btn-playpause');
+            if (isPaused) {
+                btn.innerHTML = '&#9654;';
+                btn.title = 'Jatka';
+            } else {
+                btn.innerHTML = '&#9654;&#10074;&#10074;';
+                btn.title = 'Play/Pause';
+            }
+        }
+
+        function togglePlayPause() {
+            if (isPaused) {
+                // Resume
+                isPaused = false;
+                if (pausedRemaining > 0) {
+                    timerEndTime = Date.now() + pausedRemaining;
+                    timer = setTimeout(next, pausedRemaining);
+                    pausedRemaining = 0;
+                }
+                if (currentVideo) {
+                    currentVideo.play().catch(() => {});
+                }
+            } else {
+                // Pause
+                isPaused = true;
+                clearTimeout(timer);
+                pausedRemaining = Math.max(0, timerEndTime - Date.now());
+                if (currentVideo) {
+                    currentVideo.pause();
+                }
+            }
+            updatePlaybackControls();
+        }
+
+        function goPrevious() {
+            clearTimeout(timer);
+            isPaused = false;
+            pausedRemaining = 0;
+            // index already points to next item; go back 2 to reach previous
+            index = (index - 2 + (mergedPlaylist.length || playlist.length || 1)) % (mergedPlaylist.length || playlist.length || 1);
+            next();
+        }
+
+        function goNext() {
+            clearTimeout(timer);
+            isPaused = false;
+            pausedRemaining = 0;
+            next();
+        }
+
+        async function deleteCurrentItem() {
+            if (currentIndex < 0) return;
+            const active = FAVORITES_ONLY ? mergedPlaylist :
+                ((settings.general_enabled !== false && generalFiles.length > 0)
+                || externalFiles.length > 0
+                || (settings.guest_enabled !== false && guestFiles.length > 0)
+                || (settings.favorites_enabled !== false && favoritesFiles.length > 0)
+                ? mergedPlaylist : playlist);
+            const item = active[currentIndex];
+            if (!item) return;
+            if (!confirm('Poistetaanko tama kuva/video pysyvasti?')) return;
+            try {
+                if (item._source === 'playlist') {
+                    await fetch('/api/playlist/' + item.id, { method: 'DELETE' });
+                } else if (item._source === 'general') {
+                    await fetch('/api/general/delete-file', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ filename: item.filename })
+                    });
+                } else if (item._source === 'guest') {
+                    await fetch('/api/guest/delete-file', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ filename: item.filename })
+                    });
+                } else if (item._source === 'favorites') {
+                    await fetch('/api/favorites/delete-file', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ filename: item.filename })
+                    });
+                } else if (item._source === 'external') {
+                    // Poimitaan polku src-parametrista: /api/external/file?path=C:/...
+                    var urlParams = new URLSearchParams(item.src.split('?')[1] || '');
+                    var filePath = urlParams.get('path');
+                    if (!filePath) return;
+                    var res = await fetch('/api/external/delete-file', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ path: filePath })
+                    });
+                    if (!res.ok) {
+                        var err = await res.json();
+                        alert('Poisto epaonnistui: ' + (err.error || 'Tuntematon virhe'));
+                        return;
+                    }
+                }
+            } catch (e) {
+                console.error('Poisto epaonnistui:', e);
+                return;
+            }
+            // Siirry seuraavaan
+            clearTimeout(timer);
+            isPaused = false;
+            pausedRemaining = 0;
+            _fetchPromise = null;  // pakota uudelleenhaku
+            next();
+        }
+
+        async function addToFavorites() {
+            if (currentIndex < 0) return;
+            const active = FAVORITES_ONLY ? mergedPlaylist :
+                ((settings.general_enabled !== false && generalFiles.length > 0)
+                || externalFiles.length > 0
+                || (settings.guest_enabled !== false && guestFiles.length > 0)
+                || (settings.favorites_enabled !== false && favoritesFiles.length > 0)
+                ? mergedPlaylist : playlist);
+            const item = active[currentIndex];
+            if (!item) return;
+            if (item.type === 'url') {
+                alert('URL-osoitteita ei voi lisata suosikkeihin.');
+                return;
+            }
+            try {
+                const res = await fetch('/api/favorites/add', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ src: item.src, name: item.name || '' })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    // Brief visual feedback
+                    const btn = document.getElementById('btn-favorite');
+                    btn.style.color = '#e94560';
+                    btn.style.transform = 'scale(1.3)';
+                    btn.style.transition = 'transform 0.2s ease';
+                    setTimeout(() => {
+                        btn.style.color = '';
+                        btn.style.transform = '';
+                    }, 600);
+                } else {
+                    alert('Virhe: ' + (data.error || 'Tuntematon'));
+                }
+            } catch (e) {
+                console.error('Suosikkiin lisays epaonnistui:', e);
+            }
+        }
+
+        document.getElementById('btn-prev').addEventListener('click', goPrevious);
+        document.getElementById('btn-playpause').addEventListener('click', togglePlayPause);
+        document.getElementById('btn-next').addEventListener('click', goNext);
+
+        (async function startup() {
+            await fetchPlaylist(true);
+            // next() handles the initial rebuild when mergedPlaylist is empty,
+            // avoiding a double-rebuild on startup
+            next();
+
+            // Poll settings every 10 s so display picks up admin changes
+            settingsPollTimer = setInterval(pollSettings, 10000);
+        })();
+
+        document.addEventListener('touchstart', function () {
+            if (audioUnlocked) return;
+            audioUnlocked = true;
+            dismissOverlay();
+            const v = document.querySelector('#slot video');
+            if (v && settings.video_audio) {
+                v.muted = false;
+                v.play().catch(() => { });
+            }
+        }, { passive: true, once: true });
+
+        document.addEventListener('contextmenu', e => e.preventDefault());
+        document.addEventListener('keydown', e => {
+            const blocked = ['F1', 'F3', 'F5', 'F7', 'F10', 'F11', 'F12'];
+            if (blocked.includes(e.key)) { e.preventDefault(); return; }
+            if ((e.ctrlKey || e.metaKey) && ['l', 'r', 'u', 's', 'p', 'f', 'g', 'h', 'j', 'k', 'n', 't', 'w'].includes(e.key.toLowerCase())) {
+                e.preventDefault();
+            }
+            if (e.altKey && ['ArrowLeft', 'ArrowRight', 'F4'].includes(e.key)) e.preventDefault();
+        });
+
+    </script>
+</body>
+
+</html>

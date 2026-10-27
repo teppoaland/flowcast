@@ -1,0 +1,628 @@
+﻿<!DOCTYPE html>
+<html lang="fi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FlowCast — Guest</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <style>
+        :root {
+            --bg: #1a1a2e;
+            --panel: #16213e;
+            --accent: #0f3460;
+            --highlight: #e94560;
+            --text: #eee;
+            --muted: #888;
+            --border: #2a2a4a;
+            --green: #2ecc71;
+            --red: #e74c3c;
+            --blue: #2980b9;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: system-ui, sans-serif;
+            padding: 20px;
+        }
+
+        h1 {
+            font-size: 1.4rem;
+            margin-bottom: 4px;
+        }
+
+        .display-url {
+            font-size: 0.9rem;
+            color: var(--muted);
+            margin-bottom: 20px;
+        }
+
+        .display-url a {
+            color: #5dade2;
+            text-decoration: underline;
+        }
+
+        .display-url a:hover {
+            text-decoration: underline;
+        }
+
+        .panel {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+            overflow-x: auto;
+        }
+
+        .panel h2 {
+            font-size: 0.8rem;
+            margin-bottom: 12px;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .add-row {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            align-items: flex-end;
+        }
+
+        .add-row .field {
+            display: flex;
+            flex-direction: column;
+            flex: 1 1 120px;
+        }
+
+        .add-row .field.field-btn {
+            flex: 0 0 auto;
+        }
+
+        .add-row .field label {
+            font-size: 0.8rem;
+            color: var(--muted);
+            margin-bottom: 4px;
+        }
+
+        @media (max-width: 600px) {
+            .add-row .field {
+                flex: 1 1 100%;
+                min-width: 0;
+            }
+            .add-row .field.field-btn {
+                flex: 0 0 auto;
+            }
+        }
+
+        input,
+        select,
+        button {
+            background: var(--accent);
+            color: var(--text);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 6px 10px;
+            font-size: 0.9rem;
+        }
+
+        button {
+            cursor: pointer;
+        }
+
+        button:hover {
+            opacity: 0.85;
+        }
+
+        .btn-primary {
+            background: var(--blue);
+            border-color: var(--blue);
+        }
+
+        .btn-danger {
+            background: var(--red);
+            border-color: var(--red);
+            font-size: 0.8rem;
+            padding: 4px 8px;
+        }
+
+        .btn-small {
+            font-size: 0.8rem;
+            padding: 4px 8px;
+        }
+
+        input[type="file"] {
+            cursor: pointer;
+            padding: 4px;
+        }
+
+        input[type="file"]::file-selector-button {
+            background: var(--accent);
+            color: var(--text);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 4px 10px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            margin-right: 8px;
+        }
+
+        input[type="file"]::file-selector-button:hover {
+            opacity: 0.85;
+        }
+
+        .empty-msg {
+            text-align: center;
+            color: var(--muted);
+            padding: 28px;
+        }
+
+        #general-files-modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #general-files-modal.open {
+            display: flex;
+        }
+
+        #general-files-box {
+            position: relative;
+            width: 90vw;
+            max-width: 800px;
+            max-height: 85vh;
+            background: #1a1a2e;
+            border-radius: 8px;
+            overflow-y: auto;
+            padding: 32px 24px 24px;
+            color: #ccc;
+        }
+
+        #general-files-box h3 {
+            margin: 0 0 16px 0;
+            color: #fff;
+            font-size: 1.2rem;
+        }
+
+        #general-files-box .tree-node {
+            user-select: none;
+        }
+
+        #general-files-box .tree-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 0;
+            cursor: default;
+            font-size: 0.9rem;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+        }
+
+        #general-files-box .tree-row.folder {
+            cursor: pointer;
+        }
+
+        #general-files-box .tree-row.folder:hover {
+            background: rgba(255,255,255,0.03);
+        }
+
+        #general-files-box .tree-toggle {
+            width: 18px;
+            height: 18px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            color: var(--muted);
+            transition: transform 0.15s;
+            flex-shrink: 0;
+        }
+
+        #general-files-box .tree-toggle.open {
+            transform: rotate(90deg);
+        }
+
+        #general-files-box .tree-toggle.leaf {
+            visibility: hidden;
+        }
+
+        #general-files-box .tree-icon {
+            font-size: 0.95rem;
+            flex-shrink: 0;
+        }
+
+        #general-files-box .tree-name {
+            flex: 1;
+            word-break: break-all;
+            color: #ccc;
+        }
+
+        #general-files-box .tree-row.folder .tree-name {
+            color: #ddd;
+            font-weight: 500;
+        }
+
+        #general-files-box .tree-count {
+            font-size: 0.75rem;
+            color: var(--muted);
+            flex-shrink: 0;
+        }
+
+        #general-files-box .tree-children {
+            padding-left: 20px;
+        }
+
+        #general-files-box .tree-children.collapsed {
+            display: none;
+        }
+
+        #general-files-box .type-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        #general-files-box .type-badge.image {
+            background: #1e3a5f;
+            color: #64b5f6;
+        }
+
+        #general-files-box .type-badge.video {
+            background: #3e1e1e;
+            color: #ef5350;
+        }
+
+        #general-files-box .tree-actions {
+            display: flex;
+            gap: 4px;
+            flex-shrink: 0;
+            opacity: 0;
+            transition: opacity 0.15s;
+        }
+
+        #general-files-box .tree-row:hover .tree-actions {
+            opacity: 1;
+        }
+
+        #general-files-box .tree-action-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 0.95rem;
+            padding: 2px 4px;
+            border-radius: 4px;
+            line-height: 1;
+            transition: background 0.15s;
+        }
+
+        #general-files-box .tree-action-btn:hover {
+            background: rgba(255,255,255,0.1);
+        }
+
+        #general-files-box .tree-action-btn.delete:hover {
+            background: rgba(239,83,80,0.2);
+            color: #ef5350;
+        }
+
+        #general-files-close {
+            position: absolute;
+            top: 10px;
+            right: 12px;
+            background: var(--highlight);
+            border: none;
+            color: #fff;
+            font-size: 1.2rem;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            cursor: pointer;
+            z-index: 10;
+            line-height: 32px;
+            text-align: center;
+            padding: 0;
+        }
+
+        @media (max-width: 600px) {
+            #general-files-box {
+                width: 80% !important;
+                max-width: 320px !important;
+                min-width: 280px !important;
+                left: 50% !important;
+                transform: translateX(-50%) !important;
+                padding: 45px 10px 20px !important;
+                margin: 0 !important;
+            }
+
+            #general-files-box * {
+                font-size: 18px !important;
+            }
+
+            #general-files-box .tree-row {
+                justify-content: flex-start !important;
+                gap: 8px !important;
+                min-height: 50px !important;
+                width: 100% !important;
+            }
+
+            #general-files-box .tree-name {
+                flex: 0 1 auto !important;
+                max-width: 140px !important;
+                overflow: hidden !important;
+                text-overflow: ellipsis !important;
+                white-space: nowrap !important;
+            }
+
+            #general-files-box .tree-count {
+                font-size: 14px !important;
+                color: var(--muted) !important;
+                margin-left: 5px !important;
+            }
+
+            #general-files-box .tree-actions {
+                margin-left: auto !important;
+                display: flex !important;
+                gap: 5px !important;
+            }
+
+            #general-files-box .tree-action-btn {
+                min-width: 44px !important;
+                min-height: 44px !important;
+                font-size: 22px !important;
+            }
+
+            #general-files-box .tree-children {
+                padding-left: 10px !important;
+            }
+
+            #general-files-close {
+                width: 44px !important;
+                height: 44px !important;
+                font-size: 24px !important;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="general-files-modal" onclick="closeGeneralFiles(event)">
+        <div id="general-files-box" style="width: 95%; max-width: 500px; margin: auto; font-size: 1.2rem; padding: 40px 10px 20px;">
+            <button id="general-files-close" onclick="closeGeneralFiles()">&#10005;</button>
+            <div id="general-files-content"></div>
+        </div>
+    </div>
+
+    <h1>FlowCast</h1>
+    <p class="display-url">Stream näyttö URL: <a href="{{ display_url }}" target="_blank">{{ display_url }}</a> (mix) | <a href="{{ images_url }}" target="_blank">{{ images_url }}</a> | <a href="{{ videos_url }}" target="_blank">{{ videos_url }}</a></p>
+
+    <div class="panel">
+        <h2>Sisältö — Tiedostot tallennetaan palvelimelle</h2>
+        <div class="add-row">
+            <div class="field">
+                <label>Tiedoston lataus: Anna Kansiolle ennen latausta nimi</label>
+                <input type="text" id="guest-folder" placeholder="Esim. kevat-2025" style="width:100%;" />
+            </div>
+        </div>
+        <div class="add-row">
+            <div class="field">
+                <label>Tiedostot (JPEG, PNG, MP4) tai ZIP-paketti (AVI/WMV/MOV/MKV – tallennetaan automaattisesti MP4-muodossa)</label>
+                <input type="file" id="guest-file" accept=".jpg,.jpeg,.png,.mp4,.avi,.wmv,.mov,.mkv,.zip" multiple />
+            </div>
+            <div class="field field-btn">
+                <label>&nbsp;</label>
+                <button class="btn-primary" onclick="uploadGuestFiles()">+ Lataa</button>
+            </div>
+        </div>
+        <div id="guest-upload-status" style="margin-top:8px; font-size:0.85rem; color:var(--muted);"></div>
+        <div id="guest-info" style="margin-top:12px;"></div>
+    </div>
+
+    <script>
+        function formatDuration(totalSeconds) {
+            const totalMinutes = Math.round(totalSeconds / 60);
+            if (totalMinutes < 60) {
+                return totalMinutes + ' min';
+            }
+            const hours = Math.floor(totalMinutes / 60);
+            const mins = totalMinutes % 60;
+            return hours + '.' + String(mins).padStart(2, '0') + 'h';
+        }
+
+        function escHtml(s) {
+            return String(s)
+                .replace(/&/g, '&')
+                .replace(/</g, '<')
+                .replace(/>/g, '>')
+                .replace(/"/g, '"');
+        }
+
+        async function loadGuestFiles() {
+            const res = await fetch('/api/guest/list');
+            const files = await res.json();
+            const info = document.getElementById('guest-info');
+            if (files.length === 0) {
+                info.innerHTML = '<div class="empty-msg">Mediakirjasto on tyhjä.</div>';
+            } else {
+                const imgCount = files.filter(f => f.type === 'image').length;
+                const vidCount = files.filter(f => f.type === 'video').length;
+                const defDur = 60;
+                const imgTime = formatDuration(imgCount * defDur);
+                const totalVidSeconds = files.filter(f => f.type === 'video').reduce((sum, f) => sum + (f.duration || 0), 0);
+                const vidTime = formatDuration(totalVidSeconds);
+                info.innerHTML = `<div style="display:flex;align-items:center;gap:16px;">
+                    <span style="color:var(--muted);font-size:0.9rem;">Kuvat: ${imgCount} (${imgTime}) Videot: ${vidCount} (${vidTime})</span>
+                    <button class="btn-small" onclick="showGuestFiles()" title="Ladatut tiedostot. Mobiilioptimoitu">Tiedostot</button>
+                </div>`;
+            }
+        }
+
+        async function uploadGuestFiles() {
+            const input = document.getElementById('guest-file');
+            const folderInput = document.getElementById('guest-folder');
+            const status = document.getElementById('guest-upload-status');
+            if (!folderInput.value.trim()) {
+                alert('Anna kansion nimi.');
+                return;
+            }
+            if (!input.files.length) {
+                alert('Valitse tiedosto tai ZIP-paketti.');
+                return;
+            }
+            status.textContent = 'Ladataan... (kestää hetken, riippuen tiedostojen määrästä. Voit tarkistaa latauksen tulokset painamalla Tiedostot-painiketta alta)';
+            const fd = new FormData();
+            fd.append('folder', folderInput.value.trim());
+            for (const f of input.files) {
+                fd.append('files', f);
+            }
+            const res = await fetch('/api/guest/upload', { method: 'POST', body: fd });
+            const result = await res.json();
+            if (res.ok) {
+                location.reload();
+            } else {
+                status.textContent = 'Virhe: ' + (result.error || 'Tuntematon virhe');
+            }
+        }
+
+        function buildFileTree(files) {
+            const root = { children: {}, files: [] };
+            for (const f of files) {
+                const parts = f.filename.split('/');
+                let node = root;
+                for (let i = 0; i < parts.length - 1; i++) {
+                    if (!node.children[parts[i]]) {
+                        node.children[parts[i]] = { children: {}, files: [] };
+                    }
+                    node = node.children[parts[i]];
+                }
+                node.files.push(f);
+            }
+            return root;
+        }
+
+        function countTreeFiles(node) {
+            let count = node.files.length;
+            for (const key of Object.keys(node.children)) {
+                count += countTreeFiles(node.children[key]);
+            }
+            return count;
+        }
+
+        function renderTreeNode(name, node, depth, path) {
+            const esc = (s) => s.replace(/&/g,'&').replace(/</g,'<').replace(/>/g,'>').replace(/"/g,'"').replace(/'/g,'&#039;');
+            let html = '';
+            const fullPath = path ? path + '/' + name : name;
+
+            if (name !== null) {
+                const childCount = countTreeFiles(node);
+                const hasChildren = Object.keys(node.children).length > 0;
+                const folderClass = hasChildren ? 'folder' : 'folder empty';
+                html += `<div class="tree-node">`;
+                html += `<div class="tree-row ${folderClass}" style="gap: 10px; min-height: 48px;" onclick="toggleTreeFolder(this)" data-path="${esc(fullPath)}">`;
+                html += `<span class="tree-toggle${hasChildren ? '' : ' leaf'}">&#9656;</span>`;
+                html += `<span class="tree-icon">${hasChildren ? '&#128193;' : '&#128194;'}</span>`;
+                html += `<span class="tree-name" style="flex: 1;">${esc(name)}</span>`;
+                html += `<span class="tree-count">${childCount} tiedostoa</span>`;
+                html += `</div>`;
+                html += `<div class="tree-children collapsed">`;
+            } else {
+                html += `<div class="tree-children">`;
+            }
+
+            const keys = Object.keys(node.children).sort((a, b) => a.localeCompare(b, 'fi'));
+            for (const key of keys) {
+                html += renderTreeNode(key, node.children[key], depth + 1, fullPath);
+            }
+
+            const sortedFiles = [...node.files].sort((a, b) => a.filename.localeCompare(b.filename, 'fi'));
+            for (const f of sortedFiles) {
+                const typeLabel = f.type === 'video' ? 'Video' : 'Kuva';
+                const typeClass = f.type === 'video' ? 'video' : 'image';
+                const fname = f.filename.split('/').pop();
+                html += `<div class="tree-row file" style="gap: 10px; min-height: 48px;">`;
+                html += `<span class="tree-toggle leaf">&#9656;</span>`;
+                html += `<span class="tree-icon">${f.type === 'video' ? '&#127910;' : '&#128444;'}</span>`;
+                html += `<span class="tree-name" style="flex: 1;">${esc(fname)}</span>`;
+                html += `<span class="type-badge ${typeClass}">${typeLabel}</span>`;
+                html += `<span class="tree-actions">`;
+                html += `<button class="tree-action-btn delete" onclick="event.stopPropagation();deleteGuestFile('${esc(f.filename)}')" title="Poista">&#128465;</button>`;
+                html += `</span>`;
+                html += `</div>`;
+            }
+
+            html += `</div>`;
+            if (name !== null) {
+                html += `</div>`;
+            }
+            return html;
+        }
+
+        async function showGuestFiles() {
+            const content = document.getElementById('general-files-content');
+            content.innerHTML = '<p style="color:var(--muted);">Ladataan...</p>';
+            document.getElementById('general-files-modal').classList.add('open');
+            try {
+                const res = await fetch('/api/guest/list');
+                const files = await res.json();
+                if (files.length === 0) {
+                    content.innerHTML = '<p style="color:var(--muted);">Mediakirjasto on tyhja.</p>';
+                    return;
+                }
+                const tree = buildFileTree(files);
+                const treeHtml = renderTreeNode(null, tree, 0, '');
+                content.innerHTML = `<h3>Tiedostot (${files.length} kpl)</h3>` + treeHtml;
+            } catch (err) {
+                content.innerHTML = '<p style="color:#ef5350;">Virhe tiedostojen haussa.</p>';
+            }
+        }
+
+        function toggleTreeFolder(row) {
+            const children = row.nextElementSibling;
+            if (children && children.classList.contains('tree-children')) {
+                const toggle = row.querySelector('.tree-toggle');
+                children.classList.toggle('collapsed');
+                toggle.classList.toggle('open');
+            }
+        }
+
+        async function deleteGuestFile(filename) {
+            if (!confirm('Poistetaanko tiedosto: ' + filename + '?')) return;
+            const res = await fetch('/api/guest/delete-file', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ filename })
+            });
+            if (res.ok) {
+                showGuestFiles();
+                loadGuestFiles();
+            } else {
+                const err = await res.json();
+                alert('Virhe: ' + (err.error || 'Tuntematon'));
+            }
+        }
+
+        function closeGeneralFiles(e) {
+            if (e && e.target !== document.getElementById('general-files-modal') && e.target !== document.getElementById('general-files-close')) return;
+            document.getElementById('general-files-modal').classList.remove('open');
+        }
+
+        loadGuestFiles();
+    </script>
+</body>
+
+</html>

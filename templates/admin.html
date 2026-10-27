@@ -1,0 +1,2632 @@
+﻿<!DOCTYPE html>
+<html lang="fi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FlowCast — Admin</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <style>
+        :root {
+            --bg: #1a1a2e;
+            --panel: #16213e;
+            --accent: #0f3460;
+            --highlight: #e94560;
+            --text: #eee;
+            --muted: #888;
+            --border: #2a2a4a;
+            --green: #2ecc71;
+            --red: #e74c3c;
+            --blue: #2980b9;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: system-ui, sans-serif;
+            padding: 20px;
+        }
+
+        h1 {
+            font-size: 1.4rem;
+            margin-bottom: 4px;
+        }
+
+        .display-url {
+            font-size: 0.9rem;
+            color: var(--muted);
+            margin-bottom: 20px;
+        }
+
+        .display-url a {
+            color: #5dade2;
+            text-decoration: underline;
+        }
+
+        .display-url a:hover {
+            text-decoration: underline;
+        }
+
+        .panel {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+            overflow-x: auto;
+        }
+
+        .panel h2 {
+            font-size: 0.8rem;
+            margin-bottom: 12px;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .settings-row {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            align-items: flex-end;
+        }
+
+        .settings-row .field label {
+            display: block;
+            font-size: 0.8rem;
+            color: var(--muted);
+            margin-bottom: 4px;
+        }
+
+        .add-row {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            align-items: flex-end;
+        }
+
+        .add-row .field {
+            display: flex;
+            flex-direction: column;
+            flex: 1 1 120px;
+        }
+
+        .add-row .field.field-btn {
+            flex: 0 0 auto;
+        }
+
+        .add-row .field label {
+            font-size: 0.8rem;
+            color: var(--muted);
+            margin-bottom: 4px;
+        }
+
+        @media (max-width: 600px) {
+            .add-row .field {
+                flex: 1 1 100%;
+                min-width: 0;
+            }
+            .add-row .field.field-btn {
+                flex: 0 0 auto;
+            }
+        }
+
+        input,
+        select,
+        button {
+            background: var(--accent);
+            color: var(--text);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 6px 10px;
+            font-size: 0.9rem;
+        }
+
+        button {
+            cursor: pointer;
+        }
+
+        button:hover {
+            opacity: 0.85;
+        }
+
+        .btn-primary {
+            background: var(--blue);
+            border-color: var(--blue);
+        }
+
+        .btn-danger {
+            background: var(--red);
+            border-color: var(--red);
+            font-size: 0.8rem;
+            padding: 4px 8px;
+        }
+
+        .btn-small {
+            font-size: 0.8rem;
+            padding: 4px 8px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.88rem;
+        }
+
+        th {
+            text-align: left;
+            color: #ccc;
+            font-weight: normal;
+            padding: 6px 8px;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+        }
+
+        td {
+            padding: 6px 8px;
+            border-bottom: 1px solid var(--border);
+            vertical-align: middle;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr.disabled-row td {
+            opacity: 0.4;
+        }
+
+        tr.disabled-row td.actions-cell {
+            opacity: 1;
+        }
+
+        .type-badge {
+            display: inline-block;
+            padding: 1px 6px;
+            border-radius: 3px;
+            font-size: 0.72rem;
+            text-transform: uppercase;
+        }
+
+        .type-image {
+            background: #1a5276;
+        }
+
+        .type-video {
+            background: #1e8449;
+        }
+
+        .type-url {
+            background: #7d3c98;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 30px;
+            height: 17px;
+            vertical-align: middle;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+            position: absolute;
+            padding: 0;
+            margin: 0;
+            border: none;
+            background: none;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            inset: 0;
+            background: #555;
+            border-radius: 17px;
+            transition: 0.2s;
+        }
+
+        .slider:before {
+            content: '';
+            position: absolute;
+            height: 13px;
+            width: 13px;
+            left: 2px;
+            bottom: 2px;
+            background: #fff;
+            border-radius: 50%;
+            transition: 0.2s;
+        }
+
+        .switch input:checked+.slider {
+            background: var(--green);
+        }
+
+        .switch input:checked+.slider:before {
+            transform: translateX(13px);
+        }
+
+        input[type="file"] {
+            cursor: pointer;
+            padding: 4px;
+        }
+
+        input[type="file"]::file-selector-button {
+            background: var(--accent);
+            color: var(--text);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 4px 10px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            margin-right: 8px;
+        }
+
+        input[type="file"]::file-selector-button:hover {
+            opacity: 0.85;
+        }
+
+        .inline-num {
+            width: 64px;
+            text-align: center;
+            padding: 3px 4px;
+        }
+
+        .inline-sel {
+            padding: 3px 4px;
+            font-size: 0.8rem;
+        }
+
+        .empty-msg {
+            text-align: center;
+            color: var(--muted);
+            padding: 28px;
+        }
+
+        .src-cell {
+            max-width: 240px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .drag-handle {
+            cursor: grab;
+            color: var(--muted);
+            font-size: 1rem;
+            padding: 0 4px;
+            user-select: none;
+            letter-spacing: -1px;
+        }
+
+        .drag-handle:active {
+            cursor: grabbing;
+        }
+
+        tr.drag-over td {
+            border-top: 2px solid var(--highlight);
+        }
+
+        #preview-modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #preview-modal.open {
+            display: flex;
+        }
+
+        #preview-box {
+            position: relative;
+            width: 90vw;
+            height: 90vh;
+            background: #000;
+            border-radius: 8px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #preview-box img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        #preview-box video {
+            max-width: 100%;
+            max-height: 100%;
+        }
+
+        #preview-box iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        #preview-close {
+            position: absolute;
+            top: 10px;
+            right: 12px;
+            background: var(--highlight);
+            border: none;
+            color: #fff;
+            font-size: 1.2rem;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            cursor: pointer;
+            z-index: 10;
+            line-height: 32px;
+            text-align: center;
+            padding: 0;
+        }
+
+        #general-files-modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #general-files-modal.open {
+            display: flex;
+        }
+
+        #general-files-box {
+            position: relative;
+            width: 90vw;
+            max-width: 800px;
+            max-height: 85vh;
+            background: #1a1a2e;
+            border-radius: 8px;
+            overflow-y: auto;
+            padding: 32px 24px 24px;
+            color: #ccc;
+        }
+
+        #general-files-box h3 {
+            margin: 0 0 4px 0;
+            color: #fff;
+            font-size: 1.2rem;
+        }
+
+        #general-files-box .fav-path {
+            margin: 0 0 16px 0;
+            color: var(--muted);
+            font-size: 0.8rem;
+            word-break: break-all;
+        }
+
+        #general-files-box .tree-node {
+            user-select: none;
+        }
+
+        #general-files-box .tree-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 2px 0;
+            cursor: default;
+            font-size: 0.9rem;
+        }
+
+        #general-files-box .tree-row.folder {
+            cursor: pointer;
+        }
+
+        #general-files-box .tree-row.folder:hover {
+            background: rgba(255,255,255,0.03);
+        }
+
+        #general-files-box .tree-toggle {
+            width: 18px;
+            height: 18px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            color: var(--muted);
+            transition: transform 0.15s;
+            flex-shrink: 0;
+        }
+
+        #general-files-box .tree-toggle.open {
+            transform: rotate(90deg);
+        }
+
+        #general-files-box .tree-toggle.leaf {
+            visibility: hidden;
+        }
+
+        #general-files-box .tree-icon {
+            font-size: 0.95rem;
+            flex-shrink: 0;
+        }
+
+        #general-files-box .tree-name {
+            flex: 1;
+            word-break: break-all;
+            color: #ccc;
+        }
+
+        #general-files-box .tree-row.folder .tree-name {
+            color: #ddd;
+            font-weight: 500;
+        }
+
+        #general-files-box .tree-count {
+            font-size: 0.75rem;
+            color: var(--muted);
+            flex-shrink: 0;
+        }
+
+        #general-files-box .tree-children {
+            padding-left: 20px;
+        }
+
+        #general-files-box .tree-children.collapsed {
+            display: none;
+        }
+
+        #general-files-box .type-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        #general-files-box .type-badge.image {
+            background: #1e3a5f;
+            color: #64b5f6;
+        }
+
+        #general-files-box .type-badge.video {
+            background: #3e1e1e;
+            color: #ef5350;
+        }
+
+        #general-files-box .tree-actions {
+            display: flex;
+            gap: 4px;
+            flex-shrink: 0;
+            opacity: 0;
+            transition: opacity 0.15s;
+        }
+
+        #general-files-box .tree-row:hover .tree-actions {
+            opacity: 1;
+        }
+
+        #general-files-box .tree-action-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 0.95rem;
+            padding: 2px 4px;
+            border-radius: 4px;
+            line-height: 1;
+            transition: background 0.15s;
+        }
+
+        #general-files-box .tree-action-btn:hover {
+            background: rgba(255,255,255,0.1);
+        }
+
+        #general-files-box .tree-action-btn.delete:hover {
+            background: rgba(239,83,80,0.2);
+            color: #ef5350;
+        }
+
+        #general-files-box .tree-action-btn.rename:hover {
+            background: rgba(100,181,246,0.2);
+            color: #64b5f6;
+        }
+
+        #general-files-close {
+            position: absolute;
+            top: 10px;
+            right: 12px;
+            background: var(--highlight);
+            border: none;
+            color: #fff;
+            font-size: 1.2rem;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            cursor: pointer;
+            z-index: 10;
+            line-height: 32px;
+            text-align: center;
+            padding: 0;
+        }
+
+        @media (max-width: 600px) {
+            /* 1. Pakotetaan modaali kapeaksi pilariksi (n. 1/3 kapeampi kuin nyt) */
+            #general-files-box {
+                width: 80% !important; 
+                max-width: 320px !important; 
+                min-width: 280px !important;
+                left: 50% !important;
+                transform: translateX(-50%) !important;
+                padding: 45px 10px 20px !important;
+                margin: 0 !important;
+            }
+
+            /* 2. Pakotetaan kaikki teksti 1.5x suuremmaksi */
+            #general-files-box * {
+                font-size: 18px !important; 
+            }
+
+            /* 3. Poistetaan tyhjä tila keskeltä ja tuodaan kaikki vasempaan laitaan */
+            #general-files-box .tree-row {
+                justify-content: flex-start !important;
+                gap: 8px !important;
+                min-height: 50px !important;
+                width: 100% !important;
+            }
+
+            #general-files-box .tree-name {
+                flex: 0 1 auto !important; /* Ei täytä tyhjää tilaa */
+                max-width: 140px !important; /* Rajoitetaan nimeä, jotta se ei työnnä nappeja ulos */
+                overflow: hidden !important;
+                text-overflow: ellipsis !important;
+                white-space: nowrap !important;
+            }
+
+            /* 4. Tuodaan kpl-määrät ja ikonit nimen perään */
+            #general-files-box .tree-count {
+                font-size: 14px !important;
+                color: var(--muted) !important;
+                margin-left: 5px !important;
+            }
+
+            #general-files-box .tree-actions {
+                margin-left: auto !important; /* Vain napit menevät oikeaan reunaan */
+                display: flex !important;
+                gap: 5px !important;
+            }
+
+            #general-files-box .tree-action-btn {
+                min-width: 44px !important;
+                min-height: 44px !important;
+                font-size: 22px !important;
+            }
+
+            /* 5. Sisennykset minimiin */
+            #general-files-box .tree-children {
+                padding-left: 10px !important;
+            }
+
+            #general-files-close {
+                width: 44px !important;
+                height: 44px !important;
+                font-size: 24px !important;
+            }
+        }
+
+        /* Collapsible panels */
+        .collapsible {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            margin-bottom: 16px;
+            overflow: hidden;
+        }
+
+        .collapsible-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 14px 16px;
+            cursor: pointer;
+            user-select: none;
+            transition: background 0.15s;
+        }
+
+        .collapsible-header:hover {
+            background: rgba(255,255,255,0.03);
+        }
+
+        .collapsible-header h2 {
+            font-size: 0.8rem;
+            margin: 0;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            flex: 1;
+        }
+
+        .collapse-arrow {
+            font-size: 0.7rem;
+            color: var(--muted);
+            transition: transform 0.2s;
+            flex-shrink: 0;
+        }
+
+        .collapsible.collapsed .collapse-arrow {
+            transform: rotate(-90deg);
+        }
+
+        .collapsible-body {
+            padding: 0 16px 16px 16px;
+        }
+
+        .collapsible.collapsed .collapsible-body {
+            display: none;
+        }
+
+        /* Sub-panels inside collapsible groups */
+        .sub-panel {
+            background: rgba(0,0,0,0.18);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 10px;
+        }
+
+        .sub-panel:last-child {
+            margin-bottom: 0;
+        }
+
+        .sub-panel h3 {
+            font-size: 0.75rem;
+            margin-bottom: 10px;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        /* Guest files modal (mirrors general-files-modal) */
+        #guest-files-modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #guest-files-modal.open {
+            display: flex;
+        }
+
+        #guest-files-box {
+            position: relative;
+            width: 90vw;
+            max-width: 800px;
+            max-height: 85vh;
+            background: #1a1a2e;
+            border-radius: 8px;
+            overflow-y: auto;
+            padding: 32px 24px 24px;
+            color: #ccc;
+        }
+
+        #guest-files-box h3 {
+            margin: 0 0 4px 0;
+            color: #fff;
+            font-size: 1.2rem;
+        }
+
+        #guest-files-box .fav-path {
+            margin: 0 0 16px 0;
+            color: var(--muted);
+            font-size: 0.8rem;
+            word-break: break-all;
+        }
+
+        #guest-files-box .tree-node {
+            user-select: none;
+        }
+
+        #guest-files-box .tree-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 2px 0;
+            cursor: default;
+            font-size: 0.9rem;
+        }
+
+        #guest-files-box .tree-row.folder {
+            cursor: pointer;
+        }
+
+        #guest-files-box .tree-row.folder:hover {
+            background: rgba(255,255,255,0.03);
+        }
+
+        #guest-files-box .tree-toggle {
+            width: 18px;
+            height: 18px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            color: var(--muted);
+            transition: transform 0.15s;
+            flex-shrink: 0;
+        }
+
+        #guest-files-box .tree-toggle.open {
+            transform: rotate(90deg);
+        }
+
+        #guest-files-box .tree-toggle.leaf {
+            visibility: hidden;
+        }
+
+        #guest-files-box .tree-icon {
+            font-size: 0.95rem;
+            flex-shrink: 0;
+        }
+
+        #guest-files-box .tree-name {
+            flex: 1;
+            word-break: break-all;
+            color: #ccc;
+        }
+
+        #guest-files-box .tree-row.folder .tree-name {
+            color: #ddd;
+            font-weight: 500;
+        }
+
+        #guest-files-box .tree-count {
+            font-size: 0.75rem;
+            color: var(--muted);
+            flex-shrink: 0;
+        }
+
+        #guest-files-box .tree-children {
+            padding-left: 20px;
+        }
+
+        #guest-files-box .tree-children.collapsed {
+            display: none;
+        }
+
+        #guest-files-box .type-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        #guest-files-box .type-badge.image {
+            background: #1e3a5f;
+            color: #64b5f6;
+        }
+
+        #guest-files-box .type-badge.video {
+            background: #3e1e1e;
+            color: #ef5350;
+        }
+
+        #guest-files-box .tree-actions {
+            display: flex;
+            gap: 4px;
+            flex-shrink: 0;
+            opacity: 0;
+            transition: opacity 0.15s;
+        }
+
+        #guest-files-box .tree-row:hover .tree-actions {
+            opacity: 1;
+        }
+
+        #guest-files-box .tree-action-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 0.95rem;
+            padding: 2px 4px;
+            border-radius: 4px;
+            line-height: 1;
+            transition: background 0.15s;
+        }
+
+        #guest-files-box .tree-action-btn:hover {
+            background: rgba(255,255,255,0.1);
+        }
+
+        #guest-files-box .tree-action-btn.delete:hover {
+            background: rgba(239,83,80,0.2);
+            color: #ef5350;
+        }
+
+        #guest-files-box .tree-action-btn.rename:hover {
+            background: rgba(100,181,246,0.2);
+            color: #64b5f6;
+        }
+
+        #guest-files-close {
+            position: absolute;
+            top: 10px;
+            right: 12px;
+            background: var(--highlight);
+            border: none;
+            color: #fff;
+            font-size: 1.2rem;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            cursor: pointer;
+            z-index: 10;
+            line-height: 32px;
+            text-align: center;
+            padding: 0;
+        }
+
+        @media (max-width: 600px) {
+            #guest-files-box {
+                width: 80% !important;
+                max-width: 320px !important;
+                min-width: 280px !important;
+                left: 50% !important;
+                transform: translateX(-50%) !important;
+                padding: 45px 10px 20px !important;
+                margin: 0 !important;
+            }
+
+            #guest-files-box * {
+                font-size: 18px !important;
+            }
+
+            #guest-files-box .tree-row {
+                justify-content: flex-start !important;
+                gap: 8px !important;
+                min-height: 50px !important;
+                width: 100% !important;
+            }
+
+            #guest-files-box .tree-name {
+                flex: 0 1 auto !important;
+                max-width: 140px !important;
+                overflow: hidden !important;
+                text-overflow: ellipsis !important;
+                white-space: nowrap !important;
+            }
+
+            #guest-files-box .tree-count {
+                font-size: 14px !important;
+                color: var(--muted) !important;
+                margin-left: 5px !important;
+            }
+
+            #guest-files-box .tree-actions {
+                margin-left: auto !important;
+                display: flex !important;
+                gap: 5px !important;
+            }
+
+            #guest-files-box .tree-action-btn {
+                min-width: 44px !important;
+                min-height: 44px !important;
+                font-size: 22px !important;
+            }
+
+            #guest-files-box .tree-children {
+                padding-left: 10px !important;
+            }
+
+            #guest-files-close {
+                width: 44px !important;
+                height: 44px !important;
+                font-size: 24px !important;
+            }
+        }
+
+        /* Favorites files modal (mirrors guest-files-modal) */
+        #favorites-files-modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #favorites-files-modal.open {
+            display: flex;
+        }
+
+        #favorites-files-box {
+            position: relative;
+            width: 90vw;
+            max-width: 800px;
+            max-height: 85vh;
+            background: #1a1a2e;
+            border-radius: 8px;
+            overflow-y: auto;
+            padding: 32px 24px 24px;
+            color: #ccc;
+        }
+
+        #favorites-files-box h3 {
+            margin: 0 0 4px 0;
+            color: #fff;
+            font-size: 1.2rem;
+        }
+
+        #favorites-files-box .fav-path {
+            margin: 0 0 16px 0;
+            color: var(--muted);
+            font-size: 0.8rem;
+            word-break: break-all;
+        }
+
+        #favorites-files-box .tree-node {
+            user-select: none;
+        }
+
+        #favorites-files-box .tree-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 2px 0;
+            cursor: default;
+            font-size: 0.9rem;
+        }
+
+        #favorites-files-box .tree-row.folder {
+            cursor: pointer;
+        }
+
+        #favorites-files-box .tree-row.folder:hover {
+            background: rgba(255,255,255,0.03);
+        }
+
+        #favorites-files-box .tree-toggle {
+            width: 18px;
+            height: 18px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            color: var(--muted);
+            transition: transform 0.15s;
+            flex-shrink: 0;
+        }
+
+        #favorites-files-box .tree-toggle.open {
+            transform: rotate(90deg);
+        }
+
+        #favorites-files-box .tree-toggle.leaf {
+            visibility: hidden;
+        }
+
+        #favorites-files-box .tree-icon {
+            font-size: 0.95rem;
+            flex-shrink: 0;
+        }
+
+        #favorites-files-box .tree-name {
+            flex: 1;
+            word-break: break-all;
+            color: #ccc;
+        }
+
+        #favorites-files-box .tree-row.folder .tree-name {
+            color: #ddd;
+            font-weight: 500;
+        }
+
+        #favorites-files-box .tree-count {
+            font-size: 0.75rem;
+            color: var(--muted);
+            flex-shrink: 0;
+        }
+
+        #favorites-files-box .tree-children {
+            padding-left: 20px;
+        }
+
+        #favorites-files-box .tree-children.collapsed {
+            display: none;
+        }
+
+        #favorites-files-box .type-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        #favorites-files-box .type-badge.image {
+            background: #1e3a5f;
+            color: #64b5f6;
+        }
+
+        #favorites-files-box .type-badge.video {
+            background: #3e1e1e;
+            color: #ef5350;
+        }
+
+        #favorites-files-box .tree-actions {
+            display: flex;
+            gap: 4px;
+            flex-shrink: 0;
+            opacity: 0;
+            transition: opacity 0.15s;
+        }
+
+        #favorites-files-box .tree-row:hover .tree-actions {
+            opacity: 1;
+        }
+
+        #favorites-files-box .tree-action-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 0.95rem;
+            padding: 2px 4px;
+            border-radius: 4px;
+            line-height: 1;
+            transition: background 0.15s;
+        }
+
+        #favorites-files-box .tree-action-btn:hover {
+            background: rgba(255,255,255,0.1);
+        }
+
+        #favorites-files-box .tree-action-btn.delete:hover {
+            background: rgba(239,83,80,0.2);
+            color: #ef5350;
+        }
+
+        #favorites-files-box .tree-action-btn.rename:hover {
+            background: rgba(100,181,246,0.2);
+            color: #64b5f6;
+        }
+
+        #favorites-files-close {
+            position: absolute;
+            top: 10px;
+            right: 12px;
+            background: var(--highlight);
+            border: none;
+            color: #fff;
+            font-size: 1.2rem;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            cursor: pointer;
+            z-index: 10;
+            line-height: 32px;
+            text-align: center;
+            padding: 0;
+        }
+
+        @media (max-width: 600px) {
+            #favorites-files-box {
+                width: 80% !important;
+                max-width: 320px !important;
+                min-width: 280px !important;
+                left: 50% !important;
+                transform: translateX(-50%) !important;
+                padding: 45px 10px 20px !important;
+                margin: 0 !important;
+            }
+
+            #favorites-files-box * {
+                font-size: 18px !important;
+            }
+
+            #favorites-files-box .tree-row {
+                justify-content: flex-start !important;
+                gap: 8px !important;
+                min-height: 50px !important;
+                width: 100% !important;
+            }
+
+            #favorites-files-box .tree-name {
+                flex: 0 1 auto !important;
+                max-width: 140px !important;
+                overflow: hidden !important;
+                text-overflow: ellipsis !important;
+                white-space: nowrap !important;
+            }
+
+            #favorites-files-box .tree-count {
+                font-size: 14px !important;
+                color: var(--muted) !important;
+                margin-left: 5px !important;
+            }
+
+            #favorites-files-box .tree-actions {
+                margin-left: auto !important;
+                display: flex !important;
+                gap: 5px !important;
+            }
+
+            #favorites-files-box .tree-action-btn {
+                min-width: 44px !important;
+                min-height: 44px !important;
+                font-size: 22px !important;
+            }
+
+            #favorites-files-box .tree-children {
+                padding-left: 10px !important;
+            }
+
+            #favorites-files-close {
+                width: 44px !important;
+                height: 44px !important;
+                font-size: 24px !important;
+            }
+        }
+
+        /* Global loading indicator */
+        #loading-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 9999;
+            background: rgba(0, 0, 0, 0.9);
+            color: #fff;
+            padding: 12px 32px;
+            border-radius: 0 0 8px 8px;
+            font-size: 0.95rem;
+            letter-spacing: 0.03em;
+            animation: pulse 1.2s ease-in-out infinite;
+        }
+
+        #loading-overlay.show {
+            display: block;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="loading-overlay"></div>
+
+    <div id="preview-modal" onclick="closePreview(event)">
+        <div id="preview-box">
+            <button id="preview-close" onclick="closePreview()">&#10005;</button>
+        </div>
+    </div>
+
+    <div id="general-files-modal" onclick="closeGeneralFiles(event)">
+        <div id="general-files-box" style="width: 95%; max-width: 500px; margin: auto; font-size: 1.2rem; padding: 40px 10px 20px;">
+            <button id="general-files-close" onclick="closeGeneralFiles()">&#10005;</button>
+            <div id="general-files-content"></div>
+        </div>
+    </div>
+
+    <div id="guest-files-modal" onclick="closeGuestFiles(event)">
+        <div id="guest-files-box" style="width: 95%; max-width: 500px; margin: auto; font-size: 1.2rem; padding: 40px 10px 20px;">
+            <button id="guest-files-close" onclick="closeGuestFiles()">&#10005;</button>
+            <div id="guest-files-content"></div>
+        </div>
+    </div>
+
+    <div id="favorites-files-modal" onclick="closeFavoritesFiles(event)">
+        <div id="favorites-files-box" style="width: 95%; max-width: 500px; margin: auto; font-size: 0.85rem; padding: 40px 10px 20px;">
+            <button id="favorites-files-close" onclick="closeFavoritesFiles()">&#10005;</button>
+            <div id="favorites-files-content"></div>
+        </div>
+    </div>
+
+ <!-- Yläpalkki: Logo ja Settings samassa linjassa -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+        <svg width="250" height="60" viewBox="0 0 250 60" xmlns="http://www.w3.org/2000/svg" style="display:block;">
+          <defs>
+            <linearGradient id="flowGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" style="stop-color:#00D2FF;stop-opacity:1" />
+              <stop offset="100%" style="stop-color:#9D50BB;stop-opacity:1" />
+            </linearGradient>
+          </defs>
+          <path d="M20 10 V50 M20 15 H35 Q45 15 50 25 T65 15 M20 32 H30 Q40 32 45 42 T60 32" stroke="url(#flowGrad)" stroke-width="6" fill="none" stroke-linecap="round"/>
+          <path d="M42 12 L48 15 L42 18 Z" fill="#00D2FF" />
+          <text x="85" y="42" font-family="Segoe UI, Arial, sans-serif" font-weight="bold" font-size="28" fill="white">FlowCast</text>
+        </svg>
+        <a href="/adminsettings" style="color:#5dade2; text-decoration:none; font-size: 1rem; font-weight: 500; display: flex; align-items: center; gap: 6px;">&#9881; Settings</a>
+    </div>
+
+    <p class="display-url">Stream näyttö URL: <a href="{{ display_url }}" target="_blank">{{ display_url }}</a> (mix) | <a href="{{ images_url }}" target="_blank">{{ images_url }}</a> | <a href="{{ videos_url }}" target="_blank">{{ videos_url }}</a> | <a href="{{ fav_url }}" target="_blank">{{ fav_url }}</a></p>
+
+    <div class="panel">
+        <h2>Default asetukset</h2> <!-- Palautettu otsikko -->
+        <p style="font-size:0.8rem; color:var(--muted); margin-bottom:12px;">
+            Voimassa olevat asetukset ovat testattu toimiviksi isolle kuva ja videomäärälle. Yleensä ei tarvitse säätää tai muuttaa mitään määrityksiä, mutta jos materiaalia on vähemmän, niin pidemmät näyttöajat kuville voivat toimia paremmin.<br>
+            Muutettaessa asetuksia Tallenna-painikkeen painamisen jälkeen muutetut asetukset tulevat voimaan, kun seuraava kuva tai video alkaa poislukien kustomoitu sisältö.
+        </p>
+        <div class="settings-row">
+            <div class="field">
+                <label>Sisällön näyttöaika (s)</label>
+                <input type="number" id="s-duration" min="1" style="width:80px" />
+            </div>
+            <div class="field">
+                <label>Fade</label>
+                <select id="s-fade-enabled">
+                    <option value="1">Päällä</option>
+                    <option value="0">Pois</option>
+                </select>
+            </div>
+            <div class="field">
+                <label>Fade-kesto</label>
+                <select id="s-fade-duration">
+                    <option value="0.5">0.5 s</option>
+                    <option value="1">1 s</option>
+                    <option value="2">2 s</option>
+                    <option value="3">3 s</option>
+                    <option value="4">4 s</option>
+                    <option value="5">5 s</option>
+                    <option value="6">6 s</option>
+                    <option value="7">7 s</option>
+                    <option value="8">8 s</option>
+                    <option value="9">9 s</option>
+                    <option value="10">10 s</option>
+                </select>
+            </div>
+            <div class="field">
+                <label>Siirtymätyyppi</label>
+                <select id="s-fade-type">
+                    <option value="normaali">Normaali</option>
+                    <option value="liuku-vasen">Liuku &larr;</option>
+                    <option value="liuku-oikea">Liuku &rarr;</option>
+                    <option value="zoom-in">Zoom sisään</option>
+                    <option value="zoom-ulos">Zoom ulos</option>
+                    <option value="random">&#127922; Satunnainen</option>
+                </select>
+            </div>
+            <div class="field">
+                <label>Äänet (video)</label>
+                <select id="s-video-audio">
+                    <option value="0">Ei</option>
+                    <option value="1">Kyllä</option>
+                </select>
+            </div>
+            <div class="field">
+                <label>Videot näyttöaika</label>
+                <select id="s-video-duration">
+                    <option value="default">Default</option>
+                    <option value="full">Täysi</option>
+                </select>
+            </div>
+            <div class="field">
+                <label>Näytä video toistoaika</label>
+                <select id="s-show-video-timer">
+                    <option value="1">Kyllä</option>
+                    <option value="0">Ei</option>
+                </select>
+            </div>
+            <div class="field">
+                <label>Toistopainikkeet</label>
+                <select id="s-playback-buttons">
+                    <option value="1">Kyllä</option>
+                    <option value="0">Ei</option>
+                </select>
+            </div>
+            <div class="field">
+                <label>Näytä sisältö</label>
+                <select id="s-content-filter">
+                    <option value="all">Kaikki</option>
+                    <option value="images">Vain kuvat</option>
+                    <option value="videos">Vain videot</option>
+                </select>
+            </div>
+            <div class="field">
+                <label>Näytä tiedoston nimi</label>
+                <select id="s-show-filename">
+                    <option value="1">Kyllä</option>
+                    <option value="0">Ei</option>
+                </select>
+            </div>
+            <div class="field">
+                <label>&nbsp;</label>
+                <button id="btn-save-settings" class="btn-primary" onclick="saveSettings()">Tallenna</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="collapsible collapsed" id="collapsible-custom">
+        <div class="collapsible-header" onclick="toggleCollapse('custom')">
+            <span class="collapse-arrow">▼</span>
+            <h2>1. Lisää sisältöä kustomoiduilla asetuksilla</h2>
+        </div>
+        <div class="collapsible-body">
+            <div class="sub-panel">
+                <h3>1.0 Lisää uusi sisältö</h3>
+                <div class="add-row">
+                    <div class="field">
+                        <label>Tiedosto (JPEG, PNG, MP4)</label>
+                        <input type="file" id="add-file" accept=".jpg,.jpeg,.png,.mp4" onchange="onFileSelect()" />
+                    </div>
+                    <div class="field">
+                        <label>tai URL</label>
+                        <input type="text" id="add-url" placeholder="https://..." />
+                    </div>
+                    <div class="field">
+                        <label>Nimi (valinnainen)</label>
+                        <input type="text" id="add-name" placeholder="Nimi" />
+                    </div>
+                    <div class="field field-btn">
+                        <label>&nbsp;</label>
+                        <button class="btn-primary" onclick="addItem()">+ Lisää</button>
+                    </div>
+                </div>
+            </div>
+            <div class="sub-panel">
+                <h3>1.1 Sisältö kustomoiduilla asetuksilla — Tiedostot tallennetaan palvelimelle</h3>
+                <div id="playlist-container">
+                    <div class="empty-msg">Ladataan...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="collapsible" id="collapsible-general">
+        <div class="collapsible-header" onclick="toggleCollapse('general')">
+            <span class="collapse-arrow">▼</span>
+            <h2>2. Sisältö default asetuksilla — Tiedostot tallennetaan palvelimelle</h2>
+        </div>
+        <div class="collapsible-body">
+            <p style="font-size:0.8rem; color:var(--muted); margin-bottom:12px;">Isoille tiedostomäärille - Näyttää sisällön pääasetusten mukaan, ilman yksilöllisiä asetuksia.</p>
+            <div style="margin-bottom:12px; display:flex; align-items:center; gap:8px;">
+                <label class="switch">
+                    <input type="checkbox" id="s-general-enabled" onchange="toggleGeneralEnabled(this.checked)">
+                    <span class="slider"></span>
+                </label>
+                <span style="font-size:0.9rem;">Näytä</span>
+            </div>
+            <div style="margin-bottom:12px; display:flex; align-items:center; gap:8px;">
+                <label class="switch">
+                    <input type="checkbox" id="s-shuffle" onchange="toggleShuffle(this.checked)">
+                    <span class="slider"></span>
+                </label>
+                <span style="font-size:0.9rem;">Sekoita näytettäessä osion sisältö</span>
+            </div>
+            <div class="add-row">
+                <div class="field">
+                    <label>Tiedoston lataus: Anna Kansiolle ennen latausta nimi</label>
+                    <input type="text" id="general-folder" placeholder="Esim. kevat-2025" style="width:100%;" />
+                </div>
+            </div>
+            <div class="add-row">
+                <div class="field">
+                    <label>Tiedostot (JPEG, PNG, MP4) tai ZIP-paketti (AVI/WMV/MOV/MKV – tallennetaan automaattisesti MP4-muodossa)</label>
+                    <input type="file" id="general-file" accept=".jpg,.jpeg,.png,.mp4,.avi,.wmv,.mov,.mkv,.zip" multiple />
+                </div>
+                <div class="field field-btn">
+                    <label>&nbsp;</label>
+                    <button class="btn-primary" onclick="uploadGeneralFiles()">+ Lataa</button>
+                </div>
+            </div>
+            <div id="general-upload-status" style="margin-top:8px; font-size:0.85rem; color:var(--muted);"></div>
+            <div id="general-info" style="margin-top:12px;"></div>
+        </div>
+    </div>
+
+    <div class="collapsible collapsed" id="collapsible-external">
+        <div class="collapsible-header" onclick="toggleCollapse('external')">
+            <span class="collapse-arrow">▼</span>
+            <h2>3. Liitetyt hakemistot — Tiedostohakemistot</h2>
+        </div>
+        <div class="collapsible-body">
+            <p style="font-size:0.8rem; color:var(--muted); margin-bottom:12px;">Lisää ulkoisia levyhakemistoja (esim. USB-levy), joiden kuvat ja videot näytetään feedissä default-asetusten mukaan. Tiedostoja ei kopioida palvelimelle tämän käyttöliittymän kautta.<br>
+                Järjestelmä havaitsee automaattisesti, mikäli ulkoinen kovalevy ei ole luettavissa ja säilyttää lisätyt hakemistoviittaukset, jos ulkoinen levy liitetään myöhemmin takaisin.</p>
+            <div style="margin-bottom:12px; display:flex; align-items:center; gap:8px;">
+                <label class="switch">
+                    <input type="checkbox" id="s-external-shuffle" onchange="toggleExternalShuffle(this.checked)">
+                    <span class="slider"></span>
+                </label>
+                <span style="font-size:0.9rem;">Sekoita näytettäessä osion sisältö</span>
+            </div>
+            <div class="add-row">
+                <div class="field">
+                    <label>Hakemistopolku (esim. F:\Treenivideot)</label>
+                    <input type="text" id="ext-path" placeholder="F:\Treenivideot" />
+                </div>
+                <div class="field">
+                    <label>Nimike (valinnainen)</label>
+                    <input type="text" id="ext-label" placeholder="esim. Treenivideot - DBV" />
+                </div>
+                <div class="field field-btn">
+                    <label>&nbsp;</label>
+                    <button class="btn-primary" onclick="addExternalDir()">+ Lisää</button>
+                </div>
+            </div>
+            <div id="external-dirs-status" style="margin-top:8px; font-size:0.85rem; color:var(--muted);"></div>
+            <div id="external-dirs-list" style="margin-top:12px;"></div>
+        </div>
+    </div>
+
+<div class="collapsible" id="collapsible-favorites">
+        <div class="collapsible-header" onclick="toggleCollapse('favorites')">
+            <span class="collapse-arrow">▼</span>
+            <h2>4. Parhaat sisältö — Suosikit tallennetaan hakemistoon {{ favorites_dir }}</h2>
+        </div>
+        <div class="collapsible-body">
+            <!-- Kytkin 1 -->
+            <div style="margin-bottom:12px; display:flex; align-items:center; gap:8px;">
+                <label class="switch" title="Vaikuttaa vain muihin feedeihin. URL /fav näkyy aina.">
+                    <input type="checkbox" id="s-favorites-enabled" onchange="toggleFavoritesEnabled(this.checked)">
+                    <span class="slider"></span>
+                </label>
+                <span style="font-size:0.9rem;">Parhaat-media näkyvissä yleisessä feedissä</span>
+            </div>
+            
+            <!-- Kytkin 2 -->
+            <div style="margin-bottom:12px; display:flex; align-items:center; gap:8px;">
+                <label class="switch" title="Sekoittaa sisällön random järjestykseen eri feedeissä.">
+                    <input type="checkbox" id="s-favorites-shuffle" onchange="toggleFavoritesShuffle(this.checked)">
+                    <span class="slider"></span>
+                </label>
+                <span style="font-size:0.9rem;">Sekoita parhaat-media</span>
+            </div>
+            
+            <!-- Mediapainikkeet 3-way valinta -->
+            <div style="margin-bottom:12px;">
+                <span style="font-size:0.9rem; display:block; margin-bottom:6px;">Mediapainikkeet</span>
+                <div style="display:flex; gap:16px; flex-wrap:wrap;">
+                    <label style="display:flex; align-items:center; gap:4px; cursor:pointer;" title="Näytetäänkö mediapainikkeet täysin (kaikki toiminnot), minimi (< pause >), off (piilotettu).">
+                        <input type="radio" name="fav-playback" value="täysin" onchange="toggleFavoritesPlaybackButtons(this.value)">
+                        <span style="font-size:0.85rem;">Täysin</span>
+                    </label>
+                    <label style="display:flex; align-items:center; gap:4px; cursor:pointer;" title="Näytetäänkö mediapainikkeet täysin (kaikki toiminnot), minimi (< pause >), off (piilotettu).">
+                        <input type="radio" name="fav-playback" value="minimi" onchange="toggleFavoritesPlaybackButtons(this.value)">
+                        <span style="font-size:0.85rem;">Minimi</span>
+                    </label>
+                    <label style="display:flex; align-items:center; gap:4px; cursor:pointer;" title="Näytetäänkö mediapainikkeet täysin (kaikki toiminnot), minimi (< pause >), off (piilotettu).">
+                        <input type="radio" name="fav-playback" value="off" onchange="toggleFavoritesPlaybackButtons(this.value)">
+                        <span style="font-size:0.85rem;">Off</span>
+                    </label>
+                </div>
+            </div>
+            
+            <!-- Kytkin: Näytä tiedostopolku -->
+            <div style="margin-bottom:12px; display:flex; align-items:center; gap:8px;">
+                <label class="switch" title="Näytetäänkö tiedoston nimi /fav-feedissä.">
+                    <input type="checkbox" id="s-favorites-show-filename" onchange="toggleFavoritesShowFilename(this.checked)">
+                    <span class="slider"></span>
+                </label>
+                <span style="font-size:0.9rem;">Näytä tiedostopolku</span>
+            </div>
+            <div id="favorites-info" style="margin-top:12px;"></div>
+        </div>
+    </div>
+
+    <div class="collapsible collapsed" id="collapsible-guest">
+        <div class="collapsible-header" onclick="toggleCollapse('guest')">
+            <span class="collapse-arrow">▼</span>
+            <h2>5. Guest sisältö — Tiedostot tallennetaan palvelimelle</h2>
+        </div>
+        <div class="collapsible-body">
+            <div style="margin-bottom:12px; display:flex; align-items:center; gap:8px;">
+                <label class="switch">
+                    <input type="checkbox" id="s-guest-enabled" onchange="toggleGuestEnabled(this.checked)">
+                    <span class="slider"></span>
+                </label>
+                <span style="font-size:0.9rem;">Guest-media näkyvissä</span>
+            </div>
+            <div style="margin-bottom:12px; display:flex; align-items:center; gap:8px;">
+                <label class="switch">
+                    <input type="checkbox" id="s-guest-shuffle" onchange="toggleGuestShuffle(this.checked)">
+                    <span class="slider"></span>
+                </label>
+                <span style="font-size:0.9rem;">Sekoita guest-media</span>
+            </div>
+            <div id="guest-info" style="margin-top:12px;"></div>
+            <p style="font-size:0.85rem; color:var(--muted); margin-top:8px;"><a href="{{ guest_url }}" target="_blank" style="color:#5dade2;">{{ guest_url }}</a> (Guest upload UI)</p>
+        </div>
+    </div>
+
+    <script>
+        const ADMIN_UI = {{ admin_ui|tojson }};
+        let playlistData = null;
+        let dragSrcId = null;
+        let generalFileCount = 0;
+        let guestFileCount = 0;
+        let favoritesFileCount = 0;
+
+        function showLoading(msg) {
+            var el = document.getElementById('loading-overlay');
+            el.textContent = msg || 'Käsitellään...';
+            el.classList.add('show');
+        }
+
+        function hideLoading() {
+            var el = document.getElementById('loading-overlay');
+            el.classList.remove('show');
+        }
+
+        function formatDuration(totalSeconds) {
+            const totalMinutes = Math.round(totalSeconds / 60);
+            if (totalMinutes < 60) {
+                return totalMinutes + ' min';
+            }
+            const hours = Math.floor(totalMinutes / 60);
+            const mins = totalMinutes % 60;
+            return hours + '.' + String(mins).padStart(2, '0') + 'h';
+        }
+
+        function toggleCollapse(id) {
+            const el = document.getElementById('collapsible-' + id);
+            el.classList.toggle('collapsed');
+        }
+
+        async function loadPlaylist() {
+            const res = await fetch('/api/playlist');
+            playlistData = await res.json();
+            renderSettings(playlistData.settings);
+            renderPlaylist(playlistData.items);
+            initDragAndDrop();
+        }
+
+        function renderSettings(s) {
+            document.getElementById('s-duration').value = s.default_duration || 60;
+            document.getElementById('s-fade-enabled').value = s.fade_enabled ? '1' : '0';
+            document.getElementById('s-fade-duration').value = String(s.fade_duration || 1);
+            document.getElementById('s-fade-type').value = s.fade_type || 'normaali';
+            document.getElementById('s-video-audio').value = s.video_audio ? '1' : '0';
+            document.getElementById('s-video-duration').value = s.video_duration || 'default';
+            document.getElementById('s-show-video-timer').value = s.show_video_timer !== false ? '1' : '0';
+            document.getElementById('s-playback-buttons').value = s.playback_buttons !== false ? '1' : '0';
+            document.getElementById('s-content-filter').value = s.content_filter || 'all';
+            document.getElementById('s-show-filename').value = s.show_filename !== false ? '1' : '0';
+            document.getElementById('s-general-enabled').checked = s.general_enabled !== false;
+            document.getElementById('s-shuffle').checked = s.general_shuffle_enabled !== false;
+            document.getElementById('s-guest-enabled').checked = s.guest_enabled !== false;
+            document.getElementById('s-guest-shuffle').checked = s.guest_shuffle_enabled !== false;
+            document.getElementById('s-favorites-enabled').checked = s.favorites_enabled !== false;
+            document.getElementById('s-favorites-shuffle').checked = s.favorites_shuffle_enabled !== false;
+            const favPb = s.favorites_playback_buttons || 'minimi';
+            const favPbRadio = document.querySelector('input[name="fav-playback"][value="' + favPb + '"]');
+            if (favPbRadio) favPbRadio.checked = true;
+            document.getElementById('s-favorites-show-filename').checked = s.favorites_show_filename !== false;
+            document.getElementById('s-external-shuffle').checked = s.external_shuffle_enabled !== false;
+            resetSaveButton();
+        }
+
+        function markDirty() {
+            const btn = document.getElementById('btn-save-settings');
+            btn.style.background = 'var(--red)';
+            btn.style.borderColor = 'var(--red)';
+        }
+
+        function resetSaveButton() {
+            const btn = document.getElementById('btn-save-settings');
+            btn.style.background = '';
+            btn.style.borderColor = '';
+        }
+
+        ['s-duration', 's-fade-enabled', 's-fade-duration', 's-fade-type', 's-video-audio', 's-video-duration', 's-show-video-timer', 's-playback-buttons', 's-content-filter', 's-show-filename']
+            .forEach(id => document.getElementById(id).addEventListener('change', markDirty));
+
+        function escHtml(s) {
+            return String(s)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+
+        function renderPlaylist(items) {
+            const container = document.getElementById('playlist-container');
+            if (!items || items.length === 0) {
+                container.innerHTML = '<div class="empty-msg">Soittolista on tyhjä. Lisää sisältöä yllä.</div>';
+                return;
+            }
+            const def = playlistData.settings.default_duration;
+            const rows = items.map((item, idx) => {
+                const id = escHtml(item.id);
+                const type = escHtml(item.type);
+                const src = escHtml(item.src);
+                const name = escHtml(item.name || item.src);
+                const dur = item.duration || '';
+                const fadeDur = item.fade_override !== null && item.fade_override !== undefined ? item.fade_override : '';
+                const ftNone = !item.fade_type_override ? 'selected' : '';
+                const ftNorm = item.fade_type_override === 'normaali' ? 'selected' : '';
+                const ftLV = item.fade_type_override === 'liuku-vasen' ? 'selected' : '';
+                const ftLO = item.fade_type_override === 'liuku-oikea' ? 'selected' : '';
+                const ftZI = item.fade_type_override === 'zoom-in' ? 'selected' : '';
+                const ftZU = item.fade_type_override === 'zoom-ulos' ? 'selected' : '';
+                const ftRnd = item.fade_type_override === 'random' ? 'selected' : '';
+                const disClass = item.disabled ? 'disabled-row' : '';
+                return `<tr class="${disClass}" id="row-${id}" draggable="true" data-id="${id}">
+        <td><span class="drag-handle" title="Raahaa järjestääksesi">&#8942;&#8942;</span></td>
+        <td>${idx + 1}</td>
+        <td><span class="type-badge type-${type}">${type}</span></td>
+        <td class="src-cell" title="${src}">${name}</td>
+        <td><input class="inline-num" type="number" min="1" value="${dur}" placeholder="${def}" onchange="updateItem('${id}', {duration: this.value ? parseInt(this.value) : null})" /></td>
+        <td><input class="inline-num" type="number" min="0" value="${fadeDur}" placeholder="${playlistData.settings.fade_duration}" onchange="updateItem('${id}', {fade_override: this.value !== '' ? parseFloat(this.value) : null})" /></td>
+        <td><select class="inline-sel" onchange="updateItem('${id}', {fade_type_override: this.value || null})">
+          <option value="" ${ftNone}>Default</option>
+          <option value="normaali" ${ftNorm}>Normaali</option>
+          <option value="liuku-vasen" ${ftLV}>&larr;</option>
+          <option value="liuku-oikea" ${ftLO}>&rarr;</option>
+          <option value="zoom-in" ${ftZI}>Zoom+</option>
+          <option value="zoom-ulos" ${ftZU}>Zoom-</option>
+          <option value="random" ${ftRnd}>&#127922; Satunnainen</option>
+        </select></td>
+        <td class="actions-cell"><label class="switch"><input type="checkbox" ${item.disabled ? '' : 'checked'} onchange="toggleDisabled('${id}', this.checked)"><span class="slider"></span></label></td>
+        <td class="actions-cell"><button class="btn-small" onclick="previewItem('${src}', '${type}')">Esikatselu</button></td>
+        <td class="actions-cell"><button class="btn-danger" onclick="deleteItem('${id}', '${name}')">Poista</button></td>
+      </tr>`;
+            }).join('');
+
+            const imgItems = items.filter(i => i.type === 'image');
+            const imgCount = imgItems.length;
+            const defDur = playlistData.settings.default_duration || 60;
+            const imgTotalSec = imgItems.reduce((sum, i) => sum + (i.duration || defDur), 0);
+            const imgTime = formatDuration(imgTotalSec);
+            const vidItems = items.filter(i => i.type === 'video');
+            const vidCount = vidItems.length;
+            const vidTotalSec = vidItems.reduce((sum, i) => sum + (i.duration || 0), 0);
+            const vidTime = formatDuration(vidTotalSec);
+
+            const summaryHtml = (imgCount > 0 || vidCount > 0) ? `<div style="margin-top:8px;font-size:0.85rem;color:var(--muted);">
+                Kuvat: ${imgCount} (${imgTime}) Videot: ${vidCount} (${vidTime})
+            </div>` : '';
+
+            container.innerHTML = `<table>
+      <thead><tr>
+        <th></th><th>#</th><th>Tyyppi</th><th>Nimi</th>
+        <th>Sisällön näyttöaika (s)</th><th>Fade kesto (s)</th><th>Siirtymätyyppi</th>
+        <th>Näytä</th><th></th><th></th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>${summaryHtml}`;
+        }
+
+        async function toggleGeneralEnabled(enabled) {
+            await fetch('/api/settings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ general_enabled: enabled })
+            });
+        }
+
+        async function toggleExternalShuffle(enabled) {
+            await fetch('/api/settings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ external_shuffle_enabled: enabled })
+            });
+        }
+
+        async function toggleShuffle(enabled) {
+            await fetch('/api/settings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ general_shuffle_enabled: enabled })
+            });
+        }
+
+        async function toggleGuestEnabled(enabled) {
+            await fetch('/api/settings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ guest_enabled: enabled })
+            });
+        }
+
+        async function toggleGuestShuffle(enabled) {
+            await fetch('/api/settings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ guest_shuffle_enabled: enabled })
+            });
+        }
+
+        async function toggleFavoritesEnabled(enabled) {
+            await fetch('/api/settings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ favorites_enabled: enabled })
+            });
+        }
+
+        async function toggleFavoritesShuffle(enabled) {
+            await fetch('/api/settings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ favorites_shuffle_enabled: enabled })
+            });
+        }
+
+        async function toggleFavoritesPlaybackButtons(value) {
+            await fetch('/api/settings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ favorites_playback_buttons: value })
+            });
+        }
+
+        async function toggleFavoritesShowFilename(enabled) {
+            await fetch('/api/settings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ favorites_show_filename: enabled })
+            });
+        }
+
+        async function saveSettings() {
+            const payload = {
+                default_duration: parseInt(document.getElementById('s-duration').value) || 60,
+                fade_enabled: document.getElementById('s-fade-enabled').value === '1',
+                fade_duration: parseFloat(document.getElementById('s-fade-duration').value) || 1,
+                fade_type: document.getElementById('s-fade-type').value,
+                video_audio: document.getElementById('s-video-audio').value === '1',
+                video_duration: document.getElementById('s-video-duration').value,
+                show_video_timer: document.getElementById('s-show-video-timer').value === '1',
+                playback_buttons: document.getElementById('s-playback-buttons').value === '1',
+                content_filter: document.getElementById('s-content-filter').value,
+                show_filename: document.getElementById('s-show-filename').value === '1',
+                general_enabled: document.getElementById('s-general-enabled').checked,
+                guest_enabled: document.getElementById('s-guest-enabled').checked,
+                favorites_enabled: document.getElementById('s-favorites-enabled').checked,
+                favorites_shuffle_enabled: document.getElementById('s-favorites-shuffle').checked,
+                favorites_playback_buttons: document.querySelector('input[name="fav-playback"]:checked')?.value || 'minimi',
+                favorites_show_filename: document.getElementById('s-favorites-show-filename').checked
+            };
+            await fetch('/api/settings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            location.reload();
+        }
+
+        async function addItem() {
+            const fileInput = document.getElementById('add-file');
+            const urlInput = document.getElementById('add-url').value.trim();
+            const name = document.getElementById('add-name').value.trim();
+            if (!fileInput.files.length && !urlInput) {
+                alert('Valitse tiedosto tai syötä URL.');
+                return;
+            }
+            const fd = new FormData();
+            if (fileInput.files.length) {
+                fd.append('file', fileInput.files[0]);
+            } else {
+                fd.append('url', urlInput);
+            }
+            if (name) fd.append('name', name);
+            const res = await fetch('/api/playlist/add', { method: 'POST', body: fd });
+            if (res.ok) {
+                document.getElementById('add-file').value = '';
+                document.getElementById('add-url').value = '';
+                document.getElementById('add-name').value = '';
+                await loadPlaylist();
+            } else {
+                const err = await res.json();
+                alert('Virhe: ' + (err.error || 'Tuntematon virhe'));
+            }
+        }
+
+        async function updateItem(id, patch) {
+            await fetch('/api/playlist/' + id, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(patch)
+            });
+            await loadPlaylist();
+        }
+
+        async function toggleDisabled(id, isEnabled) {
+            await updateItem(id, { disabled: !isEnabled });
+        }
+
+        async function deleteItem(id, name) {
+            if (!confirm('Poistetaanko: ' + name + '?')) return;
+            await fetch('/api/playlist/' + id, { method: 'DELETE' });
+            await loadPlaylist();
+        }
+
+        function previewItem(src, type) {
+            const box = document.getElementById('preview-box');
+            const close = document.getElementById('preview-close');
+            box.innerHTML = '';
+            box.appendChild(close);
+            if (type === 'image') {
+                const img = document.createElement('img');
+                img.src = src;
+                box.appendChild(img);
+            } else if (type === 'video') {
+                const v = document.createElement('video');
+                v.src = src;
+                v.controls = true;
+                v.autoplay = true;
+                v.muted = true;
+                box.appendChild(v);
+            } else {
+                const f = document.createElement('iframe');
+                f.src = src;
+                box.appendChild(f);
+            }
+            document.getElementById('preview-modal').classList.add('open');
+        }
+
+        function closePreview(e) {
+            if (e && e.target !== document.getElementById('preview-modal') && e.target !== document.getElementById('preview-close')) return;
+            const modal = document.getElementById('preview-modal');
+            modal.classList.remove('open');
+            const box = document.getElementById('preview-box');
+            const close = document.getElementById('preview-close');
+            box.innerHTML = '';
+            box.appendChild(close);
+        }
+
+        function onFileSelect() {
+            const f = document.getElementById('add-file').files[0];
+            if (f && !document.getElementById('add-name').value) {
+                document.getElementById('add-name').value = f.name.replace(/\.[^.]+$/, '');
+            }
+        }
+
+        function initDragAndDrop() {
+            const tbody = document.querySelector('#playlist-container tbody');
+            if (!tbody) return;
+            tbody.querySelectorAll('tr[draggable]').forEach(row => {
+                row.addEventListener('dragstart', e => {
+                    dragSrcId = row.dataset.id;
+                    e.dataTransfer.effectAllowed = 'move';
+                });
+                row.addEventListener('dragover', e => {
+                    e.preventDefault();
+                    tbody.querySelectorAll('tr').forEach(r => r.classList.remove('drag-over'));
+                    row.classList.add('drag-over');
+                });
+                row.addEventListener('dragleave', () => {
+                    row.classList.remove('drag-over');
+                });
+                row.addEventListener('drop', async e => {
+                    e.preventDefault();
+                    row.classList.remove('drag-over');
+                    if (!dragSrcId || dragSrcId === row.dataset.id) return;
+                    const rows = [...tbody.querySelectorAll('tr[data-id]')];
+                    const order = rows.map(r => r.dataset.id);
+                    const fromIdx = order.indexOf(dragSrcId);
+                    const toIdx = order.indexOf(row.dataset.id);
+                    order.splice(fromIdx, 1);
+                    order.splice(toIdx, 0, dragSrcId);
+                    await fetch('/api/playlist/reorder', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ order })
+                    });
+                    await loadPlaylist();
+                });
+            });
+        }
+
+        async function loadGeneralFiles() {
+            const res = await fetch('/api/general/list');
+            const files = await res.json();
+            generalFileCount = files.length;
+            const info = document.getElementById('general-info');
+            if (files.length === 0) {
+                info.innerHTML = '<div class="empty-msg">Mediakirjasto on tyhjä.</div>';
+            } else {
+                const imgCount = files.filter(f => f.type === 'image').length;
+                const vidCount = files.filter(f => f.type === 'video').length;
+                const defDur = playlistData.settings.default_duration || 60;
+                const imgTime = formatDuration(imgCount * defDur);
+                const totalVidSeconds = files.filter(f => f.type === 'video').reduce((sum, f) => sum + (f.duration || 0), 0);
+                const vidTime = formatDuration(totalVidSeconds);
+                info.innerHTML = `<div style="display:flex;align-items:center;gap:16px;">
+                    <span style="color:var(--muted);font-size:0.9rem;">Kuvat: ${imgCount} (${imgTime}) Videot: ${vidCount} (${vidTime})</span>
+                    <button class="btn-small" onclick="showGeneralFiles()" title="Ladatut tiedostot. Mobiilioptimoitu">Tiedostot</button>
+                    <button class="btn-small" onclick="archiveGeneralFiles()" title="Arkistoi kaikki osion tiedostot arkistohakemistoon pvm mukaan.">Arkistoi</button>
+                </div>`;
+            }
+        }
+
+        async function uploadGeneralFiles() {
+            const input = document.getElementById('general-file');
+            const folderInput = document.getElementById('general-folder');
+            const status = document.getElementById('general-upload-status');
+            if (!folderInput.value.trim()) {
+                alert('Anna kansion nimi.');
+                return;
+            }
+            if (!input.files.length) {
+                alert('Valitse tiedosto tai ZIP-paketti.');
+                return;
+            }
+            status.textContent = 'Ladataan... (kestää hetken, riippuen tiedostojen määrästä. Voit tarkistaa latauksen tulokset painamalla Tiedostot-painiketta alta)';
+            const fd = new FormData();
+            fd.append('folder', folderInput.value.trim());
+            for (const f of input.files) {
+                fd.append('files', f);
+            }
+            const res = await fetch('/api/general/upload', { method: 'POST', body: fd });
+            const result = await res.json();
+            if (res.ok) {
+                location.reload();
+            } else {
+                status.textContent = 'Virhe: ' + (result.error || 'Tuntematon virhe');
+            }
+        }
+
+        async function archiveGeneralFiles() {
+            if (!confirm('Siirretäänkö kaikki mediakirjaston tiedostot arkistoon?')) return;
+            const res = await fetch('/api/general/archive', { method: 'POST' });
+            const result = await res.json();
+            if (res.ok) {
+                document.getElementById('general-upload-status').textContent =
+                    `${result.count} tiedostoa arkistoitu kansioon: ${result.archive}`;
+                await loadGeneralFiles();
+            } else {
+                alert('Virhe: ' + (result.error || 'Tuntematon virhe'));
+            }
+        }
+
+        function buildFileTree(files) {
+            const root = { children: {}, files: [] };
+            for (const f of files) {
+                const parts = f.filename.split('/');
+                let node = root;
+                for (let i = 0; i < parts.length - 1; i++) {
+                    if (!node.children[parts[i]]) {
+                        node.children[parts[i]] = { children: {}, files: [] };
+                    }
+                    node = node.children[parts[i]];
+                }
+                node.files.push(f);
+            }
+            return root;
+        }
+
+        function countTreeFiles(node) {
+            let count = node.files.length;
+            for (const key of Object.keys(node.children)) {
+                count += countTreeFiles(node.children[key]);
+            }
+            return count;
+        }
+
+        function renderTreeNode(name, node, depth, path) {
+            const esc = (s) => s.replace(/&/g,'&').replace(/</g,'<').replace(/>/g,'>').replace(/"/g,'"').replace(/'/g,'&#039;');
+            let html = '';
+            const fullPath = path ? path + '/' + name : name;
+
+            if (name !== null) {
+                const childCount = countTreeFiles(node);
+                const hasChildren = Object.keys(node.children).length > 0;
+                const folderClass = hasChildren ? 'folder' : 'folder empty';
+                html += `<div class="tree-node">`;
+                html += `<div class="tree-row ${folderClass}" style="gap: 10px; min-height: 48px;" onclick="toggleTreeFolder(this)" data-path="${esc(fullPath)}">`;
+                html += `<span class="tree-toggle${hasChildren ? '' : ' leaf'}">&#9656;</span>`;
+                html += `<span class="tree-icon">${hasChildren ? '&#128193;' : '&#128194;'}</span>`;
+                html += `<span class="tree-name" style="flex: 1;">${esc(name)}</span>`;
+                html += `<span class="tree-count">${childCount} tiedostoa</span>`;
+                html += `</div>`;
+                html += `<div class="tree-children collapsed">`;
+            } else {
+                html += `<div class="tree-children">`;
+            }
+
+            const keys = Object.keys(node.children).sort((a, b) => a.localeCompare(b, 'fi'));
+            for (const key of keys) {
+                html += renderTreeNode(key, node.children[key], depth + 1, fullPath);
+            }
+
+            const sortedFiles = [...node.files].sort((a, b) => a.filename.localeCompare(b.filename, 'fi'));
+            for (const f of sortedFiles) {
+                const typeLabel = f.type === 'video' ? 'Video' : 'Kuva';
+                const typeClass = f.type === 'video' ? 'video' : 'image';
+                const fname = f.filename.split('/').pop();
+                html += `<div class="tree-row file" style="gap: 10px; min-height: 48px;">`;
+                html += `<span class="tree-toggle leaf">&#9656;</span>`;
+                html += `<span class="tree-icon">${f.type === 'video' ? '&#127910;' : '&#128444;'}</span>`;
+                html += `<span class="tree-name" style="flex: 1;">${esc(fname)}</span>`;
+                html += `<span class="type-badge ${typeClass}">${typeLabel}</span>`;
+                html += `<span class="tree-actions">`;
+                html += `<button class="tree-action-btn rename" onclick="event.stopPropagation();renameGeneralFile('${esc(f.filename)}')" title="Nimea uudelleen">&#9998;</button>`;
+                html += `<button class="tree-action-btn delete" onclick="event.stopPropagation();deleteGeneralFile('${esc(f.filename)}')" title="Poista">&#128465;</button>`;
+                html += `</span>`;
+                html += `</div>`;
+            }
+
+            html += `</div>`;
+            if (name !== null) {
+                html += `</div>`;
+            }
+            return html;
+        }
+
+        async function showGeneralFiles() {
+            const content = document.getElementById('general-files-content');
+            content.innerHTML = '<p style="color:var(--muted);">Ladataan...</p>';
+            document.getElementById('general-files-modal').classList.add('open');
+            try {
+                const res = await fetch('/api/general/list');
+                const files = await res.json();
+                if (files.length === 0) {
+                    content.innerHTML = '<p style="color:var(--muted);">Mediakirjasto on tyhja.</p>';
+                    return;
+                }
+                const tree = buildFileTree(files);
+                const treeHtml = renderTreeNode(null, tree, 0, '');
+                content.innerHTML = `<h3>Tiedostot (${files.length} kpl)</h3><p class="fav-path">{{ general_dir }}</p>` + treeHtml;
+            } catch (err) {
+                content.innerHTML = '<p style="color:#ef5350;">Virhe tiedostojen haussa.</p>';
+            }
+        }
+
+        function toggleTreeFolder(row) {
+            const children = row.nextElementSibling;
+            if (children && children.classList.contains('tree-children')) {
+                const toggle = row.querySelector('.tree-toggle');
+                children.classList.toggle('collapsed');
+                toggle.classList.toggle('open');
+            }
+        }
+
+        async function deleteGeneralFile(filename) {
+            if (!confirm('Poistetaanko tiedosto: ' + filename + '?')) return;
+            showLoading('Poistetaan...');
+            const res = await fetch('/api/general/delete-file', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ filename })
+            });
+            hideLoading();
+            if (res.ok) {
+                showGeneralFiles();
+            } else {
+                const err = await res.json();
+                alert('Virhe: ' + (err.error || 'Tuntematon'));
+                showGeneralFiles();
+            }
+        }
+
+        async function renameGeneralFile(filename) {
+            const fname = filename.split('/').pop();
+            const newName = prompt('Uusi nimi tiedostolle: ' + fname, fname);
+            if (!newName || newName === fname) return;
+            const res = await fetch('/api/general/rename-file', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ filename, new_name: newName })
+            });
+            if (res.ok) {
+                showGeneralFiles();
+            } else {
+                const err = await res.json();
+                alert('Virhe: ' + (err.error || 'Tuntematon'));
+            }
+        }
+
+        function closeGeneralFiles(e) {
+            if (e && e.target !== document.getElementById('general-files-modal') && e.target !== document.getElementById('general-files-close')) return;
+            document.getElementById('general-files-modal').classList.remove('open');
+        }
+
+        // -- External directories --------------------------------------------------
+
+        async function loadExternalDirs() {
+            const res = await fetch('/api/external/list');
+            const data = await res.json();
+            const dirs = data.dirs || [];
+            const files = data.files || [];
+            const container = document.getElementById('external-dirs-list');
+            if (dirs.length === 0) {
+                container.innerHTML = '<div class="empty-msg">Ei liitettyjä hakemistoja.</div>';
+            } else if (data.scanning) {
+                container.innerHTML = '<div class="empty-msg">Skannataan hakemistoja... (' + files.length + ' tiedostoa laskettu)</div>';
+                setTimeout(loadExternalDirs, 2000);
+            } else {
+                const rows = dirs.map(d => {
+                    const id = escHtml(d.id);
+                    const path = escHtml(d.path);
+                    const label = escHtml(d.label || '');
+                    const enabled = d.enabled !== false;
+                    const checked = enabled ? 'checked' : '';
+                    const allowDelete = d.allow_delete === true;
+                    const delChecked = allowDelete ? 'checked' : '';
+                    return `<div style="display:flex;align-items:center;gap:12px;padding:6px 0;border-bottom:1px solid var(--border);">
+                        <label class="switch" title="Näytä/piilota"><input type="checkbox" ${checked} onchange="toggleExternalDir('${id}', this.checked)"><span class="slider"></span></label>
+                        <span style="font-size:0.9rem;">${label ? label + ' — ' : ''}<code style="color:var(--muted);">${path}</code></span>
+                        <label class="switch" title="Salli tiedostojen poisto feedistä" style="margin-left:3ch;"><input type="checkbox" ${delChecked} onchange="toggleExternalDelete('${id}', this.checked)"><span class="slider"></span></label>
+                        <button class="btn-danger" style="margin-left:auto;" onclick="deleteExternalDir('${id}', '${label || path}', this)">Poista</button>
+                    </div>`;
+                }).join('');
+                const imgCount = files.filter(f => f.type === 'image').length;
+                const vidCount = files.filter(f => f.type === 'video').length;
+                const defDur = playlistData.settings.default_duration || 60;
+                const imgTime = formatDuration(imgCount * defDur);
+                const totalVidSeconds = files.filter(f => f.type === 'video').reduce((sum, f) => sum + (f.duration || 0), 0);
+                const vidTime = formatDuration(totalVidSeconds);
+                container.innerHTML = rows + `<div style="margin-top:8px;font-size:0.85rem;color:var(--muted);">
+                    Kuvat: ${imgCount} (${imgTime}) Videot: ${vidCount} (${vidTime}) &nbsp;
+                    <button class="btn-small" onclick="refreshExternalDirs()">Päivitä</button>
+                </div>`;
+            }
+        }
+
+        async function addExternalDir() {
+            const path = document.getElementById('ext-path').value.trim();
+            const label = document.getElementById('ext-label').value.trim();
+            if (!path) { alert('Anna hakemistopolku.'); return; }
+            const status = document.getElementById('external-dirs-status');
+            status.textContent = 'Lisätään...';
+            const res = await fetch('/api/external/add', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ path, label })
+            });
+            if (res.ok) {
+                location.reload();
+            } else {
+                const err = await res.json();
+                status.textContent = 'Virhe: ' + (err.error || 'Tuntematon');
+            }
+        }
+
+        async function toggleExternalDir(id, enabled) {
+            await fetch('/api/external/' + id, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ enabled })
+            });
+            await loadExternalDirs();
+        }
+
+        async function toggleExternalDelete(id, allowDelete) {
+            await fetch('/api/external/' + id, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ allow_delete: allowDelete })
+            });
+        }
+
+        async function deleteExternalDir(id, name, btn) {
+            if (!confirm('Poistetaanko hakemisto: ' + name + '?')) return;
+            showLoading('Poistetaan hakemistoa... (skannataan tiedostot uudelleen)');
+            if (btn) btn.disabled = true;
+            await fetch('/api/external/' + id, { method: 'DELETE' });
+            await loadExternalDirs();
+            hideLoading();
+        }
+
+        async function refreshExternalDirs() {
+            showLoading('Päivitetään... (skannataan tiedostot uudelleen)');
+            await fetch('/api/external/refresh', { method: 'POST' });
+            location.reload();
+        }
+
+        // -- Guest media management --------------------------------------------------
+
+        async function loadGuestFiles() {
+            const res = await fetch('/api/guest/list');
+            const files = await res.json();
+            guestFileCount = files.length;
+            const info = document.getElementById('guest-info');
+            if (files.length === 0) {
+                info.innerHTML = '<div class="empty-msg">Guest-mediakirjasto on tyhjä.</div>';
+            } else {
+                const imgCount = files.filter(f => f.type === 'image').length;
+                const vidCount = files.filter(f => f.type === 'video').length;
+                const defDur = playlistData && playlistData.settings ? (playlistData.settings.default_duration || 60) : 60;
+                const imgTime = formatDuration(imgCount * defDur);
+                const totalVidSeconds = files.filter(f => f.type === 'video').reduce((sum, f) => sum + (f.duration || 0), 0);
+                const vidTime = formatDuration(totalVidSeconds);
+                info.innerHTML = `<div style="display:flex;align-items:center;gap:16px;">
+                    <span style="color:var(--muted);font-size:0.9rem;">Kuvat: ${imgCount} (${imgTime}) Videot: ${vidCount} (${vidTime})</span>
+                    <button class="btn-small" onclick="showGuestFiles()" title="Guest-ladatut tiedostot. Mobiilioptimoitu">Tiedostot</button>
+                </div>`;
+            }
+        }
+
+        function buildGuestFileTree(files) {
+            const root = { children: {}, files: [] };
+            for (const f of files) {
+                const parts = f.filename.split('/');
+                let node = root;
+                for (let i = 0; i < parts.length - 1; i++) {
+                    if (!node.children[parts[i]]) {
+                        node.children[parts[i]] = { children: {}, files: [] };
+                    }
+                    node = node.children[parts[i]];
+                }
+                node.files.push(f);
+            }
+            return root;
+        }
+
+        function countGuestTreeFiles(node) {
+            let count = node.files.length;
+            for (const key of Object.keys(node.children)) {
+                count += countGuestTreeFiles(node.children[key]);
+            }
+            return count;
+        }
+
+        function renderGuestTreeNode(name, node, depth, path) {
+            const esc = (s) => s.replace(/&/g,'&').replace(/</g,'<').replace(/>/g,'>').replace(/"/g,'"').replace(/'/g,'&#039;');
+            let html = '';
+            const fullPath = path ? path + '/' + name : name;
+
+            if (name !== null) {
+                const childCount = countGuestTreeFiles(node);
+                const hasChildren = Object.keys(node.children).length > 0;
+                const folderClass = hasChildren ? 'folder' : 'folder empty';
+                html += `<div class="tree-node">`;
+                html += `<div class="tree-row ${folderClass}" style="gap: 10px; min-height: 48px;" onclick="toggleGuestTreeFolder(this)" data-path="${esc(fullPath)}">`;
+                html += `<span class="tree-toggle${hasChildren ? '' : ' leaf'}">&#9656;</span>`;
+                html += `<span class="tree-icon">${hasChildren ? '&#128193;' : '&#128194;'}</span>`;
+                html += `<span class="tree-name" style="flex: 1;">${esc(name)}</span>`;
+                html += `<span class="tree-count">${childCount} tiedostoa</span>`;
+                html += `</div>`;
+                html += `<div class="tree-children collapsed">`;
+            } else {
+                html += `<div class="tree-children">`;
+            }
+
+            const keys = Object.keys(node.children).sort((a, b) => a.localeCompare(b, 'fi'));
+            for (const key of keys) {
+                html += renderGuestTreeNode(key, node.children[key], depth + 1, fullPath);
+            }
+
+            const sortedFiles = [...node.files].sort((a, b) => a.filename.localeCompare(b.filename, 'fi'));
+            for (const f of sortedFiles) {
+                const typeLabel = f.type === 'video' ? 'Video' : 'Kuva';
+                const typeClass = f.type === 'video' ? 'video' : 'image';
+                const fname = f.filename.split('/').pop();
+                html += `<div class="tree-row file" style="gap: 10px; min-height: 48px;">`;
+                html += `<span class="tree-toggle leaf">&#9656;</span>`;
+                html += `<span class="tree-icon">${f.type === 'video' ? '&#127910;' : '&#128444;'}</span>`;
+                html += `<span class="tree-name" style="flex: 1;">${esc(fname)}</span>`;
+                html += `<span class="type-badge ${typeClass}">${typeLabel}</span>`;
+                html += `<span class="tree-actions">`;
+                html += `<button class="tree-action-btn rename" onclick="event.stopPropagation();renameGuestFile('${esc(f.filename)}')" title="Nimea uudelleen">&#9998;</button>`;
+                html += `<button class="tree-action-btn delete" onclick="event.stopPropagation();deleteGuestFile('${esc(f.filename)}')" title="Poista">&#128465;</button>`;
+                html += `</span>`;
+                html += `</div>`;
+            }
+
+            html += `</div>`;
+            if (name !== null) {
+                html += `</div>`;
+            }
+            return html;
+        }
+
+        async function showGuestFiles() {
+            const content = document.getElementById('guest-files-content');
+            content.innerHTML = '<p style="color:var(--muted);">Ladataan...</p>';
+            document.getElementById('guest-files-modal').classList.add('open');
+            try {
+                const res = await fetch('/api/guest/list');
+                const files = await res.json();
+                if (files.length === 0) {
+                    content.innerHTML = '<p style="color:var(--muted);">Guest-mediakirjasto on tyhja.</p>';
+                    return;
+                }
+                const tree = buildGuestFileTree(files);
+                const treeHtml = renderGuestTreeNode(null, tree, 0, '');
+                content.innerHTML = `<h3>Guest-tiedostot (${files.length} kpl)</h3><p class="fav-path">{{ guest_dir }}</p>` + treeHtml;
+            } catch (err) {
+                content.innerHTML = '<p style="color:#ef5350;">Virhe tiedostojen haussa.</p>';
+            }
+        }
+
+        function toggleGuestTreeFolder(row) {
+            const children = row.nextElementSibling;
+            if (children && children.classList.contains('tree-children')) {
+                const toggle = row.querySelector('.tree-toggle');
+                children.classList.toggle('collapsed');
+                toggle.classList.toggle('open');
+            }
+        }
+
+        async function deleteGuestFile(filename) {
+            if (!confirm('Poistetaanko tiedosto: ' + filename + '?')) return;
+            showLoading('Poistetaan...');
+            const res = await fetch('/api/guest/delete-file', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ filename })
+            });
+            hideLoading();
+            if (res.ok) {
+                showGuestFiles();
+                loadGuestFiles();
+            } else {
+                const err = await res.json();
+                alert('Virhe: ' + (err.error || 'Tuntematon'));
+                showGuestFiles();
+            }
+        }
+
+        async function renameGuestFile(filename) {
+            const fname = filename.split('/').pop();
+            const newName = prompt('Uusi nimi tiedostolle: ' + fname, fname);
+            if (!newName || newName === fname) return;
+            const res = await fetch('/api/guest/rename-file', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ filename, new_name: newName })
+            });
+            if (res.ok) {
+                showGuestFiles();
+                loadGuestFiles();
+            } else {
+                const err = await res.json();
+                alert('Virhe: ' + (err.error || 'Tuntematon'));
+            }
+        }
+
+        function closeGuestFiles(e) {
+            if (e && e.target !== document.getElementById('guest-files-modal') && e.target !== document.getElementById('guest-files-close')) return;
+            document.getElementById('guest-files-modal').classList.remove('open');
+        }
+
+        // -- Favorites media management --------------------------------------------------
+
+        async function loadFavoritesFiles() {
+            const res = await fetch('/api/favorites/list');
+            const files = await res.json();
+            favoritesFileCount = files.length;
+            const info = document.getElementById('favorites-info');
+            if (files.length === 0) {
+                info.innerHTML = '<div class="empty-msg">Parhaat-mediakirjasto on tyhjä. Paina sydäntä näyttötilassa lisätäksesi.</div>';
+            } else {
+                const imgCount = files.filter(f => f.type === 'image').length;
+                const vidCount = files.filter(f => f.type === 'video').length;
+                const defDur = playlistData && playlistData.settings ? (playlistData.settings.default_duration || 60) : 60;
+                const imgTime = formatDuration(imgCount * defDur);
+                const totalVidSeconds = files.filter(f => f.type === 'video').reduce((sum, f) => sum + (f.duration || 0), 0);
+                const vidTime = formatDuration(totalVidSeconds);
+                info.innerHTML = `<div style="display:flex;align-items:center;gap:16px;">
+                    <span style="color:var(--muted);font-size:0.9rem;">Kuvat: ${imgCount} (${imgTime}) Videot: ${vidCount} (${vidTime})</span>
+                    <button class="btn-small" onclick="showFavoritesFiles()" title="Suosikkitiedostot. Mobiilioptimoitu">Tiedostot</button>
+                </div>`;
+            }
+        }
+
+        function buildFavoritesFileTree(files) {
+            const root = { children: {}, files: [] };
+            for (const f of files) {
+                const parts = f.filename.split('/');
+                let node = root;
+                for (let i = 0; i < parts.length - 1; i++) {
+                    if (!node.children[parts[i]]) {
+                        node.children[parts[i]] = { children: {}, files: [] };
+                    }
+                    node = node.children[parts[i]];
+                }
+                node.files.push(f);
+            }
+            return root;
+        }
+
+        function countFavoritesTreeFiles(node) {
+            let count = node.files.length;
+            for (const key of Object.keys(node.children)) {
+                count += countFavoritesTreeFiles(node.children[key]);
+            }
+            return count;
+        }
+
+        function renderFavoritesTreeNode(name, node, depth, path) {
+            const esc = (s) => s.replace(/&/g,'&').replace(/</g,'<').replace(/>/g,'>').replace(/"/g,'"').replace(/'/g,'&#039;');
+            let html = '';
+            const fullPath = path ? path + '/' + name : name;
+
+            if (name !== null) {
+                const childCount = countFavoritesTreeFiles(node);
+                const hasChildren = Object.keys(node.children).length > 0;
+                const folderClass = hasChildren ? 'folder' : 'folder empty';
+                html += `<div class="tree-node">`;
+                html += `<div class="tree-row ${folderClass}" style="gap: 10px; min-height: 48px;" onclick="toggleFavoritesTreeFolder(this)" data-path="${esc(fullPath)}">`;
+                html += `<span class="tree-toggle${hasChildren ? '' : ' leaf'}">&#9656;</span>`;
+                html += `<span class="tree-icon">${hasChildren ? '&#128193;' : '&#128194;'}</span>`;
+                html += `<span class="tree-name" style="flex: 1;">${esc(name)}</span>`;
+                html += `<span class="tree-count">${childCount} tiedostoa</span>`;
+                html += `</div>`;
+                html += `<div class="tree-children collapsed">`;
+            } else {
+                html += `<div class="tree-children">`;
+            }
+
+            const keys = Object.keys(node.children).sort((a, b) => a.localeCompare(b, 'fi'));
+            for (const key of keys) {
+                html += renderFavoritesTreeNode(key, node.children[key], depth + 1, fullPath);
+            }
+
+            const sortedFiles = [...node.files].sort((a, b) => a.filename.localeCompare(b.filename, 'fi'));
+            for (const f of sortedFiles) {
+                const typeLabel = f.type === 'video' ? 'Video' : 'Kuva';
+                const typeClass = f.type === 'video' ? 'video' : 'image';
+                const fname = f.filename.split('/').pop();
+                html += `<div class="tree-row file" style="gap: 10px; min-height: 48px;">`;
+                html += `<span class="tree-toggle leaf">&#9656;</span>`;
+                html += `<span class="tree-icon">${f.type === 'video' ? '&#127910;' : '&#128444;'}</span>`;
+                html += `<span class="tree-name" style="flex: 1;">${esc(fname)}</span>`;
+                html += `<span class="type-badge ${typeClass}">${typeLabel}</span>`;
+                html += `<span class="tree-actions">`;
+                html += `<button class="tree-action-btn rename" onclick="event.stopPropagation();renameFavoritesFile('${esc(f.filename)}')" title="Nimea uudelleen">&#9998;</button>`;
+                html += `<button class="tree-action-btn delete" onclick="event.stopPropagation();deleteFavoritesFile('${esc(f.filename)}')" title="Poista">&#128465;</button>`;
+                html += `</span>`;
+                html += `</div>`;
+            }
+
+            html += `</div>`;
+            if (name !== null) {
+                html += `</div>`;
+            }
+            return html;
+        }
+
+        async function showFavoritesFiles() {
+            const content = document.getElementById('favorites-files-content');
+            content.innerHTML = '<p style="color:var(--muted);">Ladataan...</p>';
+            document.getElementById('favorites-files-modal').classList.add('open');
+            try {
+                const res = await fetch('/api/favorites/list');
+                const files = await res.json();
+                if (files.length === 0) {
+                    content.innerHTML = '<p style="color:var(--muted);">Parhaat-mediakirjasto on tyhja. Paina sydanta nayttotilassa lisataksesi.</p>';
+                    return;
+                }
+                const tree = buildFavoritesFileTree(files);
+                const treeHtml = renderFavoritesTreeNode(null, tree, 0, '');
+                content.innerHTML = `<h3>Parhaat-tiedostot (${files.length} kpl)</h3><p class="fav-path">{{ favorites_dir }}</p>` + treeHtml;
+            } catch (err) {
+                content.innerHTML = '<p style="color:#ef5350;">Virhe tiedostojen haussa.</p>';
+            }
+        }
+
+        function toggleFavoritesTreeFolder(row) {
+            const children = row.nextElementSibling;
+            if (children && children.classList.contains('tree-children')) {
+                const toggle = row.querySelector('.tree-toggle');
+                children.classList.toggle('collapsed');
+                toggle.classList.toggle('open');
+            }
+        }
+
+        async function deleteFavoritesFile(filename) {
+            if (!confirm('Poistetaanko tiedosto: ' + filename + '?')) return;
+            showLoading('Poistetaan...');
+            const res = await fetch('/api/favorites/delete-file', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ filename })
+            });
+            hideLoading();
+            if (res.ok) {
+                showFavoritesFiles();
+                loadFavoritesFiles();
+            } else {
+                const err = await res.json();
+                alert('Virhe: ' + (err.error || 'Tuntematon'));
+                showFavoritesFiles();
+            }
+        }
+
+        async function renameFavoritesFile(filename) {
+            const fname = filename.split('/').pop();
+            const newName = prompt('Uusi nimi tiedostolle: ' + fname, fname);
+            if (!newName || newName === fname) return;
+            const res = await fetch('/api/favorites/rename-file', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ filename, new_name: newName })
+            });
+            if (res.ok) {
+                showFavoritesFiles();
+                loadFavoritesFiles();
+            } else {
+                const err = await res.json();
+                alert('Virhe: ' + (err.error || 'Tuntematon'));
+            }
+        }
+
+        function closeFavoritesFiles(e) {
+            if (e && e.target !== document.getElementById('favorites-files-modal') && e.target !== document.getElementById('favorites-files-close')) return;
+            document.getElementById('favorites-files-modal').classList.remove('open');
+        }
+
+        function applyAdminUIVisibility() {
+            // Hide/show default settings fields
+            const fieldMap = {
+                default_duration: 's-duration',
+                fade_enabled: 's-fade-enabled',
+                fade_duration: 's-fade-duration',
+                fade_type: 's-fade-type',
+                video_audio: 's-video-audio',
+                video_duration: 's-video-duration',
+                show_video_timer: 's-show-video-timer',
+                playback_buttons: 's-playback-buttons',
+                content_filter: 's-content-filter',
+                show_filename: 's-show-filename'
+            };
+            const showFields = (ADMIN_UI && ADMIN_UI.show_fields) || {};
+            for (const [key, elId] of Object.entries(fieldMap)) {
+                if (showFields[key] === false) {
+                    const el = document.getElementById(elId);
+                    if (el) {
+                        const field = el.closest('.field');
+                        if (field) field.style.display = 'none';
+                    }
+                }
+            }
+
+            // Hide/show sections and apply open/closed state
+            const sectionMap = {
+                custom: 'collapsible-custom',
+                general: 'collapsible-general',
+                external: 'collapsible-external',
+                favorites: 'collapsible-favorites',
+                guest: 'collapsible-guest'
+            };
+            const sections = (ADMIN_UI && ADMIN_UI.sections) || {};
+            for (const [key, elId] of Object.entries(sectionMap)) {
+                const sec = sections[key] || {};
+                const el = document.getElementById(elId);
+                if (!el) continue;
+                if (sec.enabled === false) {
+                    el.style.display = 'none';
+                } else {
+                    // Apply open/closed state
+                    if (sec.open === true) {
+                        el.classList.remove('collapsed');
+                    } else if (sec.open === false) {
+                        el.classList.add('collapsed');
+                    }
+                    // else: undefined = leave as default (from HTML)
+                }
+            }
+        }
+
+        loadPlaylist();
+        loadGeneralFiles();
+        loadExternalDirs();
+        loadGuestFiles();
+        loadFavoritesFiles();
+
+        // Apply admin UI visibility settings
+        applyAdminUIVisibility();
+
+        // Auto-refresh guest and favorites every 10 seconds
+        setInterval(function() {
+            loadGuestFiles();
+            loadFavoritesFiles();
+        }, 10000);
+    </script>
+</body>
+
+</html>

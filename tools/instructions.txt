@@ -1,0 +1,14 @@
+# Dry-run: näytä duplikaatit poistamatta mitään
+python duplicate_finder.py C:\Kuvat
+
+# Vain tietyt tiedostotyypit (.jpg, .png, .mp4)
+python duplicate_finder.py C:\Kuvat --ext .jpg .png .mp4
+
+# Poista duplikaatit (säilytä uusin versio)
+python duplicate_finder.py C:\Kuvat --delete --keep newest
+
+# Nopea tila (hybridi-hash: alku+koko+loppu, ~3-10x nopeampi)
+python duplicate_finder.py C:\Kuvat --quick --delete --yes
+
+# Ohita tietyt alihakemistot + kirjoita loki
+python duplicate_finder.py C:\Kuvat --exclude-dir thumbnails temp --log poistot.log
